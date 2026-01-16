@@ -66,7 +66,7 @@ Planned implementation includes additional segmentation and access control for e
   - `SSID_HomelabNetwork`
 - Installed **Proxmox Virtual Environment** on a spare custom-built PC
 - Created multiple virtual machines:
-  - Ubuntu Server (80 GB)
+  - Ubuntu Server
   - Ubuntu Desktop
   - Kali Linux
 - Verified:
