@@ -12,10 +12,10 @@ This repository documents my personal **home lab environment**, built to strengt
 * **Primary SSIDs:** * `SSID_ExistingNetwork` (General Use)
     * `SSID_HomelabNetwork` (Dedicated Lab Access)
 
-### 📶 Layer 2: Distribution (Current)
-* **Device:** WN2000RPTv2 (Universal Wi-Fi Range Extender)
-* **Mode:** Wireless Bridge / Access Point (SSID broadcasting disabled).
-* **🚧 Planned Upgrade:** Transitioning to **Physical Cat6 Ethernet** backhaul to the TP-Link AX6600 for gigabit stability.
+### 📶 Layer 2: Distribution & Access
+* **Current:** WN2000RPTv2 (Wireless Bridge mode).
+* **🚧 Planned Upgrade:** Physical **Cat6 Ethernet** backhaul to replace wireless bridging for gigabit stability.
+* **🚧 Segmentation:** Implementation of **VLAN Firewall Rules** to strictly isolate the Cyber Lab from the Home Production network.
 
 ---
 
@@ -26,16 +26,13 @@ This repository documents my personal **home lab environment**, built to strengt
 | :--- | :--- | :--- |
 | **CPU** | Intel i7-7700HQ (4C/8T) | Core Compute |
 | **RAM** | 16 GB DDR4 | Over-provisioned Lab Pool |
-| **GPU (Host)** | Intel HD Graphics 630 | Console / Host Display |
 | **GPU (VM)** | **NVIDIA GTX 1070 Mobile** | Bound to `vfio-pci` (Target: VM 100/109) |
 | **SSD (120GB)** | SK Hynix | `local`, `local-lvm` (OS & ISOs) |
-| **HDD (1TB)** | HGST | `vmdata` (Primary VM Store / 864GB Free) |
+| **HDD (1TB)** | HGST | `vmdata` (Primary VM Store / NAS Target) |
 
 ---
 
 ## 🌐 Phase 2: SDN & IPAM Logic
-The lab utilizes **Software Defined Networking (SDN)** to isolate production traffic from experimental zones.
-
 ### 🗺️ Network Zones
 | Name | Bridge/VNet | Subnet | IPAM Strategy | Gateway |
 | :--- | :--- | :--- | :--- | :--- |
@@ -56,54 +53,51 @@ The lab utilizes **Software Defined Networking (SDN)** to isolate production tra
 | :--- | :--- | :--- | :--- | :--- |
 | **109** | `Ubuntu-Server` | **192.168.0.159** | Running | **Core Infra** (Docker/Monitoring) |
 | **100** | `Ubuntu-Desktop`| **10.10.100.100** | Stopped | Workstation (GTX 1070 / Tailscale) |
+| **TBD** | `NAS-VM` | **TBD** | Planned | Dedicated Storage / Network Shares |
 
 ### 🧪 Cyber Range & Distro Lab (SDN)
 | VMID | Name | IP Address | OS | RAM |
 | :--- | :--- | :--- | :--- | :--- |
 | **101** | `Kali` | **10.10.100.101** | Kali Linux | 2GB |
 | **102** | `opnsense` | **10.10.100.102** | FreeBSD | 3GB |
-| **103** | `OpenSUSE` | **10.10.100.103** | Tumbleweed | 4GB |
-| **104** | `Fedora` | **10.10.100.104** | Fedora 40 | 4GB |
 | **105** | `ZorinOS` | **10.10.100.105** | Zorin OS | 8GB |
-| **106** | `Manjaro` | **10.10.100.106** | Rolling | 4GB |
-| **107** | `Linux-Mint` | **10.10.100.107** | Mint 21.x | 4GB |
 | **108** | `PopOS` | **10.10.100.108** | Pop!_OS | 8GB |
+| **103-107**| `Distro-Hop` | **10.10.100.10x** | Various | 4GB |
 
 ---
 
 ## 📦 Phase 4: Primary Services (VM 109)
-Docker stack managed via **Portainer** at `https://192.168.0.159:9443`.
+Docker stack managed via **Portainer**.
 
 | Service | Port | Description |
 | :--- | :--- | :--- |
 | **Homepage** | `3000` | Central Dashboard |
 | **Uptime Kuma** | `3001` | Service Health Monitoring |
 | **Portainer** | `9443` | Container Orchestration |
-| **Watchtower** | N/A | Automated Image Updates |
-| **RustDesk** | N/A | (Planned) Self-hosted Remote Desktop |
+| **Nginx Proxy Manager**| `81` | (Planned) Internal Domain/SSL Management |
+| **RustDesk Server** | `21115-21119`| (Planned) Self-hosted Remote Support |
 
 ---
 
 ## 🎯 Phase 5: Future Roadmap & Goals
 
-### 🛠️ Short-Term Projects
-- [ ] **Tailscale Migration**: Move Tailscale from VM 100 to VM 109 to act as a **Subnet Router**.
-- [ ] **Subnet Routing**: Advertise `10.10.100.0/24` via Tailscale for remote lab access.
-- [ ] **Jellyfin/Anime Server**: Deploy on VM 109 using 1TB HDD and GTX 1070 hardware transcoding.
-- [ ] **Ethernet Overhaul**: Run physical cabling to replace wireless bridging.
+### 🛠️ Core Infrastructure & Services
+- [ ] **Ethernet Overhaul**: Replace wireless bridge with physical Cat6 cabling.
+- [ ] **Nginx Proxy Manager**: Implement clean internal domains (e.g., `proxmox.home`, `kuma.home`).
+- [ ] **Internal DNS**: Deploy **AdGuard Home** or **Pi-hole** for network-wide ad-blocking and DNS sinkhole.
+- [ ] **NAS VM**: Build a dedicated NAS VM to manage the 1TB HDD and provide SMB/NFS shares.
 
-### 🛡️ Cybersecurity & Networking
-- [ ] **OPNsense Firewall**: Configure VM 102 as a gateway/firewall for the Lab SDN.
-- [ ] **Pi-hole**: Network-wide ad-blocking and DNS sinkhole.
-- [ ] **VLAN Expansion**: Increased segmentation for IoT and Guest devices.
-- [ ] **SIEM/Logging**: Implement monitoring tools to track "attack" traffic in the Cyber Range.
+### 🛡️ Cybersecurity Lab Expansion
+- [ ] **Tailscale Subnet Router**: Centralize remote access on VM 109 for the `10.10.100.x` range.
+- [ ] **VLAN Firewall Rules**: Implement strict segmentation between Home LAN and Lab SDN.
+- [ ] **Wazuh / Security Onion**: Deploy enterprise SIEM and IDS to monitor attack traffic within the lab.
+- [ ] **Jellyfin**: Deploy via Docker on VM 109 with GTX 1070 hardware transcoding.
 
 ---
 
 ## 💾 Maintenance & Configs
 * **PCI Isolation:** `pcie_acs_override=downstream,multifunction` active in GRUB.
 * **IOMMU Health:** NVIDIA GP104BM verified bound to `vfio-pci`.
-* **SDN State:** Configs managed in `/etc/pve/sdn/`.
 
 ---
 
@@ -111,12 +105,6 @@ Docker stack managed via **Portainer** at `https://192.168.0.159:9443`.
 
 ### February 2026 — Infrastructure Deep-Dive
 - **Audited Proxmox Host:** Verified Kernel 6.17 and PVE 9.1 stability.
-- **Hardware Inventory:** Documented GTX 1070 passthrough status and storage distribution (SSD vs HDD).
-- **Network Mapping:** Finalized SDN `testnet` logic and implemented the `VMID-to-IP` mapping system (10.10.100.1xx).
-- **Docker Audit:** Verified health of Homepage, Uptime Kuma, and Portainer.
-- **Strategic Planning:** Defined roadmap for Tailscale centralization and media server deployment.
-
-### January 2026 — Foundational Phase
-- Repurposed TP-Link AX6600 as the core routing device.
-- Segmented wireless network into dual SSIDs.
-- Installed Proxmox VE and provisioned initial VM stack (Ubuntu/Kali).
+- **Hardware Inventory:** Documented GTX 1070 passthrough status and storage distribution.
+- **Network Mapping:** Finalized SDN `testnet` logic and implemented the `VMID-to-IP` mapping system.
+- **Roadmap Expanded:** Integrated SIEM (Wazuh), Proxy (NPM), and DNS (AdGuard/Pi-hole) into long-term goals.
