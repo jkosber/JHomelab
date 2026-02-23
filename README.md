@@ -1,57 +1,40 @@
-# JHomelab
+# 🛸 JHomelab: Master Infrastructure Documentation
 
-This repository documents my personal **home lab environment**, built to strengthen my skills in **networking, systems administration, virtualization, and cybersecurity**.  
-
-The lab is designed to simulate **enterprise-level IT and security concepts** within a home setting and is continuously evolving as new technologies and configurations are introduced.
+This repository documents my personal **home lab environment**, built to strengthen skills in **networking, systems administration, virtualization, and cybersecurity**.
 
 ---
 
-## 🧩 System Architecture Overview
+## 🧩 Network Architecture
 
-### Core Network Layer
-**Device:** TP-Link AX6600 Tri-Band Wi-Fi 6 Router  
-**Primary Functions:**
-- Core routing and DHCP
-- firewall management
+### 🌐 Layer 3: Core Routing
+* **Device:** TP-Link AX6600 Tri-Band Wi-Fi 6 Router
+* **Functions:** Core routing, DHCP, and Firewall management.
+* **Primary SSIDs:** * `SSID_ExistingNetwork` (General Use)
+    * `SSID_HomelabNetwork` (Dedicated Lab Access)
 
----
-
-### Distribution / Switch Layer
-**Device:** WN2000RPTv2 – Universal Wi-Fi Range Extender  
-
-- SSID broadcasting disabled  
-- Functions as a **wireless bridge / access point** to extend network connectivity to lab infrastructure
+### 📶 Layer 2: Distribution (Current)
+* **Device:** WN2000RPTv2 (Universal Wi-Fi Range Extender)
+* **Mode:** Wireless Bridge / Access Point (SSID broadcasting disabled).
+* **🚧 Planned Upgrade:** Transitioning to **Physical Cat6 Ethernet** backhaul to the TP-Link AX6600 for gigabit stability.
 
 ---
-
-### Access Layer
-*(Work in Progress)*
-
-Planned implementation includes additional segmentation and access control for endpoint devices.
-
----
-
-# 🛸 AlienLab: Master Infrastructure Documentation
 
 ## 🏗️ Phase 1: Physical Host (`jhome`)
-**Hardware:** Alienware 15 R3  
-**Hypervisor:** Proxmox VE 9.1.0 (Kernel: 6.17.9-1-pve)  
-**Management IP:** `192.168.0.2`
+**Hardware:** Alienware 15 R3 | **Hypervisor:** Proxmox VE 9.1.0 | **Management IP:** `192.168.0.2`
 
-### 💻 Hardware & Storage
 | Component | Specification | Pool / Usage |
 | :--- | :--- | :--- |
 | **CPU** | Intel i7-7700HQ (4C/8T) | Core Compute |
 | **RAM** | 16 GB DDR4 | Over-provisioned Lab Pool |
 | **GPU (Host)** | Intel HD Graphics 630 | Console / Host Display |
-| **GPU (Passthrough)** | **NVIDIA GTX 1070 Mobile** | Bound to `vfio-pci` (VM 100) |
+| **GPU (VM)** | **NVIDIA GTX 1070 Mobile** | Bound to `vfio-pci` (Target: VM 100/109) |
 | **SSD (120GB)** | SK Hynix | `local`, `local-lvm` (OS & ISOs) |
 | **HDD (1TB)** | HGST | `vmdata` (Primary VM Store / 864GB Free) |
 
 ---
 
-## 🌐 Phase 2: Network & IPAM Logic
-The lab uses **Software Defined Networking (SDN)** to isolate production traffic from testing environments.
+## 🌐 Phase 2: SDN & IPAM Logic
+The lab utilizes **Software Defined Networking (SDN)** to isolate production traffic from experimental zones.
 
 ### 🗺️ Network Zones
 | Name | Bridge/VNet | Subnet | IPAM Strategy | Gateway |
@@ -59,23 +42,22 @@ The lab uses **Software Defined Networking (SDN)** to isolate production traffic
 | **Home LAN** | `vmbr0` | `192.168.0.0/24` | Static / External DHCP | `192.168.0.1` |
 | **Lab SDN** | `testnet` | `10.10.100.0/24` | **PVE IPAM (Dynamic DHCP)** | `10.10.100.1` |
 
-> [!NOTE]
-> **Static Mapping**: All Lab VMs utilize a 1:1 mapping where the last octet of the IP matches the last digit of the VMID (e.g., VM 105 = `.105`).
+> [!IMPORTANT]
+> **Static Mapping Logic**: Lab VMs utilize a 1:1 mapping where the last octet matches the VMID suffix.
+> *Example: VM **105** → IP **10.10.100.105***
 
 ---
 
 ## 🖥️ Phase 3: Virtual Machine Inventory
 > **RAM Strategy**: Total assigned (~48GB) > Physical (16GB). Only **VM 109** is set to **Auto-Boot**.
 
-
-
-### 🏠 Production & Management (Bridged)
+### 🏠 Infrastructure & Workstations
 | VMID | Name | IP Address | Status | Role |
 | :--- | :--- | :--- | :--- | :--- |
-| **109** | `Ubuntu-Server` | **192.168.0.159** | Running | Core Infra (Docker/Monitoring) |
+| **109** | `Ubuntu-Server` | **192.168.0.159** | Running | **Core Infra** (Docker/Monitoring) |
 | **100** | `Ubuntu-Desktop`| **10.10.100.100** | Stopped | Workstation (GTX 1070 / Tailscale) |
 
-### 🧪 Cyber Range & Distro Lab (SDN / IPAM)
+### 🧪 Cyber Range & Distro Lab (SDN)
 | VMID | Name | IP Address | OS | RAM |
 | :--- | :--- | :--- | :--- | :--- |
 | **101** | `Kali` | **10.10.100.101** | Kali Linux | 2GB |
@@ -90,62 +72,51 @@ The lab uses **Software Defined Networking (SDN)** to isolate production traffic
 ---
 
 ## 📦 Phase 4: Primary Services (VM 109)
-Docker stack managed via Portainer at `https://192.168.0.159:9443`.
+Docker stack managed via **Portainer** at `https://192.168.0.159:9443`.
 
 | Service | Port | Description |
 | :--- | :--- | :--- |
 | **Homepage** | `3000` | Central Dashboard |
 | **Uptime Kuma** | `3001` | Service Health Monitoring |
-| **Portainer** | `9443` | Web UI for Container Management |
+| **Portainer** | `9443` | Container Orchestration |
 | **Watchtower** | N/A | Automated Image Updates |
+| **RustDesk** | N/A | (Planned) Self-hosted Remote Desktop |
 
 ---
 
-## 🎯 Phase 5: Future Roadmap
-- [ ] **Tailscale Migration**: Move Tailscale from VM 100 to VM 109.
+## 🎯 Phase 5: Future Roadmap & Goals
+
+### 🛠️ Short-Term Projects
+- [ ] **Tailscale Migration**: Move Tailscale from VM 100 to VM 109 to act as a **Subnet Router**.
 - [ ] **Subnet Routing**: Advertise `10.10.100.0/24` via Tailscale for remote lab access.
-- [ ] **Jellyfin**: Deploy via Docker on VM 109 with GTX 1070 Transcoding.
-- [ ] **Networking**: Enable OPNsense (VM 102) as a gateway/firewall for the Lab SDN.
+- [ ] **Jellyfin/Anime Server**: Deploy on VM 109 using 1TB HDD and GTX 1070 hardware transcoding.
+- [ ] **Ethernet Overhaul**: Run physical cabling to replace wireless bridging.
+
+### 🛡️ Cybersecurity & Networking
+- [ ] **OPNsense Firewall**: Configure VM 102 as a gateway/firewall for the Lab SDN.
+- [ ] **Pi-hole**: Network-wide ad-blocking and DNS sinkhole.
+- [ ] **VLAN Expansion**: Increased segmentation for IoT and Guest devices.
+- [ ] **SIEM/Logging**: Implement monitoring tools to track "attack" traffic in the Cyber Range.
 
 ---
 
 ## 💾 Maintenance & Configs
-- **PCI Isolation**: `pcie_acs_override=downstream,multifunction` active in GRUB.
-- **IOMMU Health**: NVIDIA GP104BM verified bound to `vfio-pci`.
-- **SDN Configs**: `/etc/pve/sdn/`
+* **PCI Isolation:** `pcie_acs_override=downstream,multifunction` active in GRUB.
+* **IOMMU Health:** NVIDIA GP104BM verified bound to `vfio-pci`.
+* **SDN State:** Configs managed in `/etc/pve/sdn/`.
+
+---
+
 ## 🧾 Operational Journal (Changelog)
 
-### Foundational Phase — January 2026
-- Repurposed TP-Link AX6600 as the core routing device
-- Segmented wireless network into two SSIDs:
-  - `SSID_ExistingNetwork`
-  - `SSID_HomelabNetwork`
-- Installed **Proxmox Virtual Environment** on a spare custom-built PC
-- Created multiple virtual machines:
-  - Ubuntu Server
-  - Ubuntu Desktop
-  - Kali Linux
-- Verified:
-  - Static/dynamic IP assignments
-  - Gateway routing
-  - IP sanitation and connectivity via Linux CLI tools
+### February 2026 — Infrastructure Deep-Dive
+- **Audited Proxmox Host:** Verified Kernel 6.17 and PVE 9.1 stability.
+- **Hardware Inventory:** Documented GTX 1070 passthrough status and storage distribution (SSD vs HDD).
+- **Network Mapping:** Finalized SDN `testnet` logic and implemented the `VMID-to-IP` mapping system (10.10.100.1xx).
+- **Docker Audit:** Verified health of Homepage, Uptime Kuma, and Portainer.
+- **Strategic Planning:** Defined roadmap for Tailscale centralization and media server deployment.
 
----
-
-## 🚧 Project Status
-
-This homelab is **actively maintained and expanded**. Future improvements include:
-- Dedicated firewall deployment (OPNsense)
-- Expanded VLAN architecture
-- Improved access layer design
-- Additional security monitoring and logging tools
-- Pihole
-
----
-
-## 📌 Goals
-
-- Simulate real-world enterprise networking environments
-- Gain hands-on experience with virtualization and network segmentation
-- Practice security hardening, monitoring, and access control
-- Build a documented, reproducible lab suitable for learning and experimentation
+### January 2026 — Foundational Phase
+- Repurposed TP-Link AX6600 as the core routing device.
+- Segmented wireless network into dual SSIDs.
+- Installed Proxmox VE and provisioned initial VM stack (Ubuntu/Kali).
