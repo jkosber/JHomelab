@@ -21,7 +21,7 @@ The lab is designed to simulate **enterprise-level IT and security concepts** wi
 ### 🔌 Access Layer
 * **Status:** Work in Progress.
 * **Planned:** Additional segmentation and access control for endpoint devices.
-* **🚧 Tier 2 Upgrade:** **Managed Switch Implementation**. Required to enable **Physical VLAN Segmentation** (802.1Q).
+* **🚧 Tier 2 Upgrade:** **Managed Switch Implementation**. Required to enable **Physical VLAN Segmentation** (802.1Q) for hardware-level isolation.
 
 ---
 
@@ -59,21 +59,23 @@ The lab utilizes **Software Defined Networking (SDN)** to isolate production tra
 ## 🖥️ Phase 3: Virtual Machine Inventory
 > **RAM Strategy**: Total assigned (~48GB) > Physical (16GB). Only **VM 109** is set to **Auto-Boot**.
 
-### 🏠 Infrastructure & Workstations
-| VMID | Name | IP Address | Status | Role |
-| :--- | :--- | :--- | :--- | :--- |
-| **109** | `Ubuntu-Server` | **192.168.0.159** | Running | **Core Infra** (Docker/Monitoring) |
-| **100** | `Ubuntu-Desktop`| **10.10.100.100** | Stopped | Workstation (GTX 1070 / Tailscale) |
-| **TBD** | `NAS-VM` | **TBD** | Planned | Dedicated Storage / Network Shares |
+### 🏠 Infrastructure & High-Performance
+| VMID | Name | IP Address | OS | RAM | Status |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **109** | `Ubuntu-Server` | **192.168.0.159** | Ubuntu 24.04 | 2GB | **Running** |
+| **100** | `Ubuntu-Desktop`| **10.10.100.100** | Ubuntu Desktop | 8GB | Stopped |
+| **102** | `opnsense` | **10.10.100.102** | OPNsense | 3GB | Stopped |
 
-### 🧪 Cyber Range & Distro Lab (SDN)
-| VMID | Name | IP Address | OS | RAM |
-| :--- | :--- | :--- | :--- | :--- |
-| **101** | `Kali` | **10.10.100.101** | Kali Linux | 2GB |
-| **102** | `opnsense` | **10.10.100.102** | FreeBSD | 3GB |
-| **105** | `ZorinOS` | **10.10.100.105** | Zorin OS | 8GB |
-| **108** | `PopOS` | **10.10.100.108** | Pop!_OS | 8GB |
-| **103-107**| `Distro-Hop` | **10.10.100.10x** | Various | 4GB |
+### 🧪 Cyber Range & Distro Lab (SDN: `testnet`)
+| VMID | Name | IP Address | OS Distro | RAM | Disk |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **101** | `Kali` | **10.10.100.101** | Kali Linux | 2GB | 30GB |
+| **103** | `OpenSUSE-Desktop`| **10.10.100.103** | OpenSUSE Tumbleweed | 4GB | 30GB |
+| **104** | `Fedora-Desktop` | **10.10.100.104** | Fedora 40 | 4GB | 30GB |
+| **105** | `ZorinOS` | **10.10.100.105** | Zorin OS 17 | 8GB | 40GB |
+| **106** | `Manjaro-Desktop` | **10.10.100.106** | Manjaro (Arch) | 4GB | 30GB |
+| **107** | `Linux-Mint` | **10.10.100.107** | Linux Mint 21 | 4GB | 30GB |
+| **108** | `PopOS` | **10.10.100.108** | Pop!_OS | 8GB | 30GB |
 
 ---
 
@@ -95,9 +97,9 @@ Docker stack managed via **Portainer**.
 ### 🛠️ Core Infrastructure & Services
 - [ ] **Ethernet Overhaul**: Replace wireless bridge with physical Cat6 cabling.
 - [ ] **Managed Switch**: Procure and configure for **Physical VLAN tagging (802.1Q)**.
-- [ ] **Nginx Proxy Manager**: Implement clean internal domains (e.g., `proxmox.home`, `kuma.home`).
-- [ ] **Internal DNS**: Deploy **AdGuard Home** or **Pi-hole** for network-wide sinkhole.
-- [ ] **NAS VM**: Build dedicated NAS VM for SMB/NFS using the 1TB HDD.
+- [ ] **Nginx Proxy Manager**: Implement clean internal domains (e.g., `proxmox.home`).
+- [ ] **Internal DNS**: Deploy **AdGuard Home** or **Pi-hole**.
+- [ ] **NAS VM**: Dedicated storage VM for SMB/NFS using the 1TB HDD.
 
 ### 🛡️ Cybersecurity Lab Expansion
 - [ ] **Tailscale Subnet Router**: Centralize remote access on VM 109 for the `10.10.100.x` range.
@@ -118,7 +120,7 @@ Docker stack managed via **Portainer**.
 
 ### February 2026 — Infrastructure Deep-Dive
 - **Audited Proxmox Host:** Verified Kernel 6.17 and PVE 9.1 stability.
-- **Hardware Inventory:** Documented GTX 1070 passthrough status and storage distribution (SSD vs HDD).
+- **Hardware Inventory:** Documented GTX 1070 status and mapped out Distro Lab inventory (VMIDs 101-108).
 - **Network Mapping:** Finalized SDN `testnet` logic and implemented the `VMID-to-IP` mapping system (10.10.100.1xx).
 - **Strategic Roadmap:** Expanded goals to include SIEM (Wazuh), Proxy (NPM), Managed Switching, and DNS.
 
