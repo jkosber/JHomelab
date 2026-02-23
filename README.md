@@ -39,24 +39,88 @@ Planned implementation includes additional segmentation and access control for e
 
 ---
 
-## 🧱 Compute & Virtualization Layer
+# 🛸 AlienLab: Master Infrastructure Documentation
 
-| Host       | Role                     | Key Workloads                                                                 | Notes |
-|------------|--------------------------|--------------------------------------------------------------------------------|-------|
-| **Proxmox 1** | Network & Security Core | Pi-hole VM, future OPNsense firewall                                           | Higher RAM allocation, dedicated to infrastructure services |
-| **Proxmox 2** | Application Layer       | Ubuntu Server, Ubuntu Desktop, Kali Linux, Docker VM (Portainer Agent, Omada Controller) | 24/7 uptime, minimal dependency on main workstation |
+## 🏗️ Phase 1: Physical Host (`jhome`)
+**Hardware:** Alienware 15 R3  
+**Hypervisor:** Proxmox VE 9.1.0 (Kernel: 6.17.9-1-pve)  
+**Management IP:** `192.168.0.2`
+
+### 💻 Hardware & Storage
+| Component | Specification | Pool / Usage |
+| :--- | :--- | :--- |
+| **CPU** | Intel i7-7700HQ (4C/8T) | Core Compute |
+| **RAM** | 16 GB DDR4 | Over-provisioned Lab Pool |
+| **GPU (Host)** | Intel HD Graphics 630 | Console / Host Display |
+| **GPU (Passthrough)** | **NVIDIA GTX 1070 Mobile** | Bound to `vfio-pci` (VM 100) |
+| **SSD (120GB)** | SK Hynix | `local`, `local-lvm` (OS & ISOs) |
+| **HDD (1TB)** | HGST | `vmdata` (Primary VM Store / 864GB Free) |
 
 ---
 
-## 🌐 Network Segmentation & VLAN Policy
+## 🌐 Phase 2: Network & IPAM Logic
+The lab uses **Software Defined Networking (SDN)** to isolate production traffic from testing environments.
 
-| VLAN | Subnet              | Purpose                              | Notes |
-|------|---------------------|--------------------------------------|-------|
-| 1    | 192.168.0.0/24      | Core Infrastructure                  | Router, Proxmox, NAS, controllers, critical services |
-| 2    | 192.168.30.0/24     | Stable Home Network                  | Household and partner devices, isolated from homelab |
+### 🗺️ Network Zones
+| Name | Bridge/VNet | Subnet | IPAM Strategy | Gateway |
+| :--- | :--- | :--- | :--- | :--- |
+| **Home LAN** | `vmbr0` | `192.168.0.0/24` | Static / External DHCP | `192.168.0.1` |
+| **Lab SDN** | `testnet` | `10.10.100.0/24` | **PVE IPAM (Dynamic DHCP)** | `10.10.100.1` |
+
+> [!NOTE]
+> **Static Mapping**: All Lab VMs utilize a 1:1 mapping where the last octet of the IP matches the last digit of the VMID (e.g., VM 105 = `.105`).
 
 ---
 
+## 🖥️ Phase 3: Virtual Machine Inventory
+> **RAM Strategy**: Total assigned (~48GB) > Physical (16GB). Only **VM 109** is set to **Auto-Boot**.
+
+
+
+### 🏠 Production & Management (Bridged)
+| VMID | Name | IP Address | Status | Role |
+| :--- | :--- | :--- | :--- | :--- |
+| **109** | `Ubuntu-Server` | **192.168.0.159** | Running | Core Infra (Docker/Monitoring) |
+| **100** | `Ubuntu-Desktop`| **10.10.100.100** | Stopped | Workstation (GTX 1070 / Tailscale) |
+
+### 🧪 Cyber Range & Distro Lab (SDN / IPAM)
+| VMID | Name | IP Address | OS | RAM |
+| :--- | :--- | :--- | :--- | :--- |
+| **101** | `Kali` | **10.10.100.101** | Kali Linux | 2GB |
+| **102** | `opnsense` | **10.10.100.102** | FreeBSD | 3GB |
+| **103** | `OpenSUSE` | **10.10.100.103** | Tumbleweed | 4GB |
+| **104** | `Fedora` | **10.10.100.104** | Fedora 40 | 4GB |
+| **105** | `ZorinOS` | **10.10.100.105** | Zorin OS | 8GB |
+| **106** | `Manjaro` | **10.10.100.106** | Rolling | 4GB |
+| **107** | `Linux-Mint` | **10.10.100.107** | Mint 21.x | 4GB |
+| **108** | `PopOS` | **10.10.100.108** | Pop!_OS | 8GB |
+
+---
+
+## 📦 Phase 4: Primary Services (VM 109)
+Docker stack managed via Portainer at `https://192.168.0.159:9443`.
+
+| Service | Port | Description |
+| :--- | :--- | :--- |
+| **Homepage** | `3000` | Central Dashboard |
+| **Uptime Kuma** | `3001` | Service Health Monitoring |
+| **Portainer** | `9443` | Web UI for Container Management |
+| **Watchtower** | N/A | Automated Image Updates |
+
+---
+
+## 🎯 Phase 5: Future Roadmap
+- [ ] **Tailscale Migration**: Move Tailscale from VM 100 to VM 109.
+- [ ] **Subnet Routing**: Advertise `10.10.100.0/24` via Tailscale for remote lab access.
+- [ ] **Jellyfin**: Deploy via Docker on VM 109 with GTX 1070 Transcoding.
+- [ ] **Networking**: Enable OPNsense (VM 102) as a gateway/firewall for the Lab SDN.
+
+---
+
+## 💾 Maintenance & Configs
+- **PCI Isolation**: `pcie_acs_override=downstream,multifunction` active in GRUB.
+- **IOMMU Health**: NVIDIA GP104BM verified bound to `vfio-pci`.
+- **SDN Configs**: `/etc/pve/sdn/`
 ## 🧾 Operational Journal (Changelog)
 
 ### Foundational Phase — January 2026
