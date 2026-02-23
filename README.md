@@ -121,4 +121,24 @@ Docker stack managed via **Portainer**.
 ### February 2026 — Infrastructure Deep-Dive
 - **Audited Proxmox Host:** Verified Kernel 6.17 and PVE 9.1 stability.
 - **Hardware Inventory:** Documented GTX 1070 status and mapped out Distro Lab inventory (VMIDs 100-109).
-- **Network Mapping:** Final
+- **Network Mapping:** Finalized SDN `testnet` logic and implemented the `VMID-to-IP` mapping system (10.10.100.1xx).
+- **Strategic Roadmap:** Expanded goals to include SIEM (Wazuh), Proxy (NPM), Managed Switching, and DNS.
+
+### January 2026 — Foundational Phase
+- Repurposed TP-Link AX6600 as the core routing device.
+- Segmented wireless network into two SSIDs: `SSID_ExistingNetwork` and `SSID_HomelabNetwork`.
+- Installed **Proxmox Virtual Environment** on Alienware host.
+- Created initial VM stack (Ubuntu Server, Ubuntu Desktop, Kali Linux).
+- **Verified:**
+  - Static/dynamic IP assignments.
+  - Gateway routing.
+  - IP sanitation and connectivity via Linux CLI tools.
+
+---
+
+## 📌 Goals
+
+- Simulate real-world enterprise networking environments.
+- Gain hands-on experience with virtualization and network segmentation.
+- Practice security hardening, monitoring, and access control.
+- Build a documented, reproducible lab suitable for learning and experimentation.
