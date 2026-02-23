@@ -2,18 +2,26 @@
 
 This repository documents my personal **home lab environment**, built to strengthen skills in **networking, systems administration, virtualization, and cybersecurity**.
 
+The lab is designed to simulate **enterprise-level IT and security concepts** within a home setting and is continuously evolving as new technologies and configurations are introduced.
+
 ---
 
-## 🧩 Network Architecture
+## 🧩 System Architecture Overview
 
-### 🌐 Layer 3: Core Routing
+### 🌐 Core Network Layer
 * **Device:** TP-Link AX6600 Tri-Band Wi-Fi 6 Router
-* **Functions:** Core routing, DHCP, and Firewall management.
+* **Primary Functions:** Core routing, DHCP, and firewall management.
 
-### 📶 Layer 2: Distribution & Access (Evolution Path)
-* **Current State:** WN2000RPTv2 (Wireless Bridge mode).
-* **🚧 Tier 1 Upgrade:** Physical **Cat6 Ethernet** backhaul to replace wireless bridging.
-* **🚧 Tier 2 Upgrade:** **Managed Switch Implementation**. Required to enable **Physical VLAN Segmentation** (802.1Q) for hardware-level isolation.
+### 📶 Distribution / Switch Layer
+* **Device:** Netgear WN2000RPTv2 – Universal Wi-Fi Range Extender
+* **Status:** SSID broadcasting disabled.
+* **Function:** Wireless bridge / access point to extend network connectivity to lab infrastructure.
+* **🚧 Planned Upgrade:** Transition to **Physical Cat6 Ethernet** backhaul for gigabit stability.
+
+### 🔌 Access Layer
+* **Status:** Work in Progress.
+* **Planned:** Additional segmentation and access control for endpoint devices.
+* **🚧 Tier 2 Upgrade:** **Managed Switch Implementation**. Required to enable **Physical VLAN Segmentation** (802.1Q).
 
 ---
 
@@ -24,6 +32,7 @@ This repository documents my personal **home lab environment**, built to strengt
 | :--- | :--- | :--- |
 | **CPU** | Intel i7-7700HQ (4C/8T) | Core Compute |
 | **RAM** | 16 GB DDR4 | Over-provisioned Lab Pool |
+| **GPU (Host)** | Intel HD Graphics 630 | Console / Host Display |
 | **GPU (VM)** | **NVIDIA GTX 1070 Mobile** | Bound to `vfio-pci` (Target: VM 100/109) |
 | **SSD (120GB)** | SK Hynix | `local`, `local-lvm` (OS & ISOs) |
 | **HDD (1TB)** | HGST | `vmdata` (Primary VM Store / NAS Target) |
@@ -31,6 +40,10 @@ This repository documents my personal **home lab environment**, built to strengt
 ---
 
 ## 🌐 Phase 2: SDN & IPAM Logic
+The lab utilizes **Software Defined Networking (SDN)** to isolate production traffic from experimental zones.
+
+
+
 ### 🗺️ Network Zones
 | Name | Bridge/VNet | Subnet | IPAM Strategy | Gateway |
 | :--- | :--- | :--- | :--- | :--- |
@@ -72,7 +85,7 @@ Docker stack managed via **Portainer**.
 | **Homepage** | `3000` | Central Dashboard |
 | **Uptime Kuma** | `3001` | Service Health Monitoring |
 | **Portainer** | `9443` | Container Orchestration |
-| **Nginx Proxy Manager**| `81` | (Planned) Reverse Proxy/SSL |
+| **Nginx Proxy Manager**| `81` | (Planned) Reverse Proxy/SSL Management |
 | **RustDesk Server** | `21115+` | (Planned) Self-hosted Remote Support |
 
 ---
@@ -82,13 +95,13 @@ Docker stack managed via **Portainer**.
 ### 🛠️ Core Infrastructure & Services
 - [ ] **Ethernet Overhaul**: Replace wireless bridge with physical Cat6 cabling.
 - [ ] **Managed Switch**: Procure and configure for **Physical VLAN tagging (802.1Q)**.
-- [ ] **Nginx Proxy Manager**: Implement clean internal domains (e.g., `proxmox.home`).
-- [ ] **Internal DNS**: Deploy **AdGuard Home** or **Pi-hole**.
-- [ ] **NAS VM**: Dedicated storage VM for SMB/NFS using the 1TB HDD.
+- [ ] **Nginx Proxy Manager**: Implement clean internal domains (e.g., `proxmox.home`, `kuma.home`).
+- [ ] **Internal DNS**: Deploy **AdGuard Home** or **Pi-hole** for network-wide sinkhole.
+- [ ] **NAS VM**: Build dedicated NAS VM for SMB/NFS using the 1TB HDD.
 
 ### 🛡️ Cybersecurity Lab Expansion
-- [ ] **Tailscale Subnet Router**: Centralize remote access on VM 109.
-- [ ] **VLAN Firewall Rules**: Strict hardware/software segmentation.
+- [ ] **Tailscale Subnet Router**: Centralize remote access on VM 109 for the `10.10.100.x` range.
+- [ ] **VLAN Firewall Rules**: Strict hardware/software segmentation between zones.
 - [ ] **Wazuh / Security Onion**: Deploy enterprise SIEM and IDS for traffic monitoring.
 - [ ] **Jellyfin**: Hardware-accelerated media server using the GTX 1070.
 
@@ -97,6 +110,7 @@ Docker stack managed via **Portainer**.
 ## 💾 Maintenance & Configs
 * **PCI Isolation:** `pcie_acs_override=downstream,multifunction` active in GRUB.
 * **IOMMU Health:** NVIDIA GP104BM verified bound to `vfio-pci`.
+* **SDN Configs:** `/etc/pve/sdn/`
 
 ---
 
@@ -104,9 +118,9 @@ Docker stack managed via **Portainer**.
 
 ### February 2026 — Infrastructure Deep-Dive
 - **Audited Proxmox Host:** Verified Kernel 6.17 and PVE 9.1 stability.
-- **Hardware Inventory:** Documented GTX 1070 passthrough status and storage distribution.
-- **Network Mapping:** Finalized SDN `testnet` logic and implemented the `VMID-to-IP` mapping system.
-- **Roadmap Expanded:** Integrated SIEM (Wazuh), Proxy (NPM), Managed Switching, and DNS goals.
+- **Hardware Inventory:** Documented GTX 1070 passthrough status and storage distribution (SSD vs HDD).
+- **Network Mapping:** Finalized SDN `testnet` logic and implemented the `VMID-to-IP` mapping system (10.10.100.1xx).
+- **Strategic Roadmap:** Expanded goals to include SIEM (Wazuh), Proxy (NPM), Managed Switching, and DNS.
 
 ### January 2026 — Foundational Phase
 - Repurposed TP-Link AX6600 as the core routing device.
@@ -117,3 +131,12 @@ Docker stack managed via **Portainer**.
   - Static/dynamic IP assignments.
   - Gateway routing.
   - IP sanitation and connectivity via Linux CLI tools.
+
+---
+
+## 📌 Goals
+
+- Simulate real-world enterprise networking environments.
+- Gain hands-on experience with virtualization and network segmentation.
+- Practice security hardening, monitoring, and access control.
+- Build a documented, reproducible lab suitable for learning and experimentation.
