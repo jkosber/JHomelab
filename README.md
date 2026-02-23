@@ -13,7 +13,7 @@ This repository documents my personal **home lab environment**, built to strengt
 ### 📶 Layer 2: Distribution & Access (Evolution Path)
 * **Current State:** WN2000RPTv2 (Wireless Bridge mode).
 * **🚧 Tier 1 Upgrade:** Physical **Cat6 Ethernet** backhaul to replace wireless bridging.
-* **🚧 Tier 2 Upgrade:** **Managed Switch Implementation**. This is required to enable **Physical VLAN Segmentation**, allowing hardware-level isolation between the Home LAN, Lab SDN, and IoT devices.
+* **🚧 Tier 2 Upgrade:** **Managed Switch Implementation**. Required to enable **Physical VLAN Segmentation** (802.1Q) for hardware-level isolation.
 
 ---
 
@@ -72,8 +72,8 @@ Docker stack managed via **Portainer**.
 | **Homepage** | `3000` | Central Dashboard |
 | **Uptime Kuma** | `3001` | Service Health Monitoring |
 | **Portainer** | `9443` | Container Orchestration |
-| **Nginx Proxy Manager**| `81` | (Planned) Internal Domain/SSL Management |
-| **RustDesk Server** | `21115-21119`| (Planned) Self-hosted Remote Support |
+| **Nginx Proxy Manager**| `81` | (Planned) Reverse Proxy/SSL |
+| **RustDesk Server** | `21115+` | (Planned) Self-hosted Remote Support |
 
 ---
 
@@ -88,7 +88,7 @@ Docker stack managed via **Portainer**.
 
 ### 🛡️ Cybersecurity Lab Expansion
 - [ ] **Tailscale Subnet Router**: Centralize remote access on VM 109.
-- [ ] **VLAN Firewall Rules**: Strict segmentation enforced at the OPNsense/Switch level.
+- [ ] **VLAN Firewall Rules**: Strict hardware/software segmentation.
 - [ ] **Wazuh / Security Onion**: Deploy enterprise SIEM and IDS for traffic monitoring.
 - [ ] **Jellyfin**: Hardware-accelerated media server using the GTX 1070.
 
@@ -104,6 +104,16 @@ Docker stack managed via **Portainer**.
 
 ### February 2026 — Infrastructure Deep-Dive
 - **Audited Proxmox Host:** Verified Kernel 6.17 and PVE 9.1 stability.
-- **Hardware Inventory:** Documented GTX 1070 passthrough status.
+- **Hardware Inventory:** Documented GTX 1070 passthrough status and storage distribution.
 - **Network Mapping:** Finalized SDN `testnet` logic and implemented the `VMID-to-IP` mapping system.
-- **Strategic Roadmap:** Defined path for **Managed Switching** and **Physical VLAN** implementation.
+- **Roadmap Expanded:** Integrated SIEM (Wazuh), Proxy (NPM), Managed Switching, and DNS goals.
+
+### January 2026 — Foundational Phase
+- Repurposed TP-Link AX6600 as the core routing device.
+- Segmented wireless network into two SSIDs: `SSID_ExistingNetwork` and `SSID_HomelabNetwork`.
+- Installed **Proxmox Virtual Environment** on Alienware host.
+- Created initial VM stack (Ubuntu Server, Ubuntu Desktop, Kali Linux).
+- **Verified:**
+  - Static/dynamic IP assignments.
+  - Gateway routing.
+  - IP sanitation and connectivity via Linux CLI tools.
