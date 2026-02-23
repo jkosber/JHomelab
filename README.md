@@ -64,7 +64,10 @@ The lab utilizes **Software Defined Networking (SDN)** to isolate production tra
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | **109** | `Ubuntu-Server` | **192.168.0.159** | Ubuntu 24.04 | 2 GB | **Running** |
 | **100** | `Ubuntu-Desktop`| **10.10.100.100** | Ubuntu Desktop | 8 GB | Stopped |
-| **102** | `opnsense` | **10.10.100.102** | FreeBSD (OPNsense) | 3 GB | Stopped |
+| **102** | `opnsense` | **10.10.100.102** | FreeBSD (OPNsense) | 3 GB | **🚧 WIP** |
+
+> [!NOTE]
+> **VM 102 Configuration**: Currently being configured for **Single-NIC topology**. It will use a virtual interface on `vmbr0` as WAN and a virtual interface on `testnet` as LAN to route traffic internally within the host.
 
 ### 🧪 Cyber Range & Distro Lab (SDN: `testnet`)
 | VMID | Name | IP Address | OS Distro | RAM | Disk |
