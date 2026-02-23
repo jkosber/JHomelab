@@ -1,6 +1,6 @@
 # 🛸 JHomelab: Master Infrastructure Documentation
 
-This repository documents my personal **home lab environment**, built to strengthen skills in **networking, systems administration, virtualization, and cybersecurity**.
+This repository documents my personal **home lab environment**, built to strengthen skills in **networking, systems administration, virtualization, and cybersecurity**.  
 
 The lab is designed to simulate **enterprise-level IT and security concepts** within a home setting and is continuously evolving as new technologies and configurations are introduced.
 
@@ -9,18 +9,18 @@ The lab is designed to simulate **enterprise-level IT and security concepts** wi
 ## 🧩 System Architecture Overview
 
 ### 🌐 Core Network Layer
-* **Device:** TP-Link AX6600 Tri-Band Wi-Fi 6 Router
+* **Device:** TP-Link AX6600 Tri-Band Wi-Fi 6 Router  
 * **Primary Functions:** Core routing, DHCP, and firewall management.
 
 ### 📶 Distribution / Switch Layer
-* **Device:** Netgear WN2000RPTv2 – Universal Wi-Fi Range Extender
-* **Status:** SSID broadcasting disabled.
-* **Function:** Wireless bridge / access point to extend network connectivity to lab infrastructure.
+* **Device:** Netgear WN2000RPTv2 – Universal Wi-Fi Range Extender  
+* **Status:** SSID broadcasting disabled.  
+* **Function:** Wireless bridge / access point to extend network connectivity to lab infrastructure.  
 * **🚧 Planned Upgrade:** Transition to **Physical Cat6 Ethernet** backhaul for gigabit stability.
 
 ### 🔌 Access Layer
-* **Status:** Work in Progress.
-* **Planned:** Additional segmentation and access control for endpoint devices.
+* **Status:** Work in Progress.  
+* **Planned:** Additional segmentation and access control for endpoint devices.  
 * **🚧 Tier 2 Upgrade:** **Managed Switch Implementation**. Required to enable **Physical VLAN Segmentation** (802.1Q) for hardware-level isolation.
 
 ---
@@ -51,7 +51,7 @@ The lab utilizes **Software Defined Networking (SDN)** to isolate production tra
 | **Lab SDN** | `testnet` | `10.10.100.0/24` | **PVE IPAM (Dynamic DHCP)** | `10.10.100.1` |
 
 > [!IMPORTANT]
-> **Static Mapping Logic**: Lab VMs utilize a 1:1 mapping where the last octet matches the VMID suffix.
+> **Static Mapping Logic**: Lab VMs utilize a 1:1 mapping where the last octet matches the VMID suffix.  
 > *Example: VM **105** → IP **10.10.100.105***
 
 ---
@@ -62,20 +62,20 @@ The lab utilizes **Software Defined Networking (SDN)** to isolate production tra
 ### 🏠 Infrastructure & High-Performance
 | VMID | Name | IP Address | OS | RAM | Status |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **109** | `Ubuntu-Server` | **192.168.0.159** | Ubuntu 24.04 | 2GB | **Running** |
-| **100** | `Ubuntu-Desktop`| **10.10.100.100** | Ubuntu Desktop | 8GB | Stopped |
-| **102** | `opnsense` | **10.10.100.102** | OPNsense | 3GB | Stopped |
+| **109** | `Ubuntu-Server` | **192.168.0.159** | Ubuntu 24.04 | 2 GB | **Running** |
+| **100** | `Ubuntu-Desktop`| **10.10.100.100** | Ubuntu Desktop | 8 GB | Stopped |
+| **102** | `opnsense` | **10.10.100.102** | FreeBSD (OPNsense) | 3 GB | Stopped |
 
 ### 🧪 Cyber Range & Distro Lab (SDN: `testnet`)
 | VMID | Name | IP Address | OS Distro | RAM | Disk |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **101** | `Kali` | **10.10.100.101** | Kali Linux | 2GB | 30GB |
-| **103** | `OpenSUSE-Desktop`| **10.10.100.103** | OpenSUSE Tumbleweed | 4GB | 30GB |
-| **104** | `Fedora-Desktop` | **10.10.100.104** | Fedora 40 | 4GB | 30GB |
-| **105** | `ZorinOS` | **10.10.100.105** | Zorin OS 17 | 8GB | 40GB |
-| **106** | `Manjaro-Desktop` | **10.10.100.106** | Manjaro (Arch) | 4GB | 30GB |
-| **107** | `Linux-Mint` | **10.10.100.107** | Linux Mint 21 | 4GB | 30GB |
-| **108** | `PopOS` | **10.10.100.108** | Pop!_OS | 8GB | 30GB |
+| **101** | `Kali` | **10.10.100.101** | Kali Linux | 2 GB | 30 GB |
+| **103** | `OpenSUSE-Desktop`| **10.10.100.103** | OpenSUSE Tumbleweed | 4 GB | 30 GB |
+| **104** | `Fedora-Desktop` | **10.10.100.104** | Fedora 40 | 4 GB | 30 GB |
+| **105** | `ZorinOS` | **10.10.100.105** | Zorin OS 17 | 8 GB | 40 GB |
+| **106** | `Manjaro-Desktop` | **10.10.100.106** | Manjaro (Arch) | 4 GB | 30 GB |
+| **107** | `Linux-Mint` | **10.10.100.107** | Linux Mint 21 | 4 GB | 30 GB |
+| **108** | `PopOS` | **10.10.100.108** | Pop!_OS | 8 GB | 30 GB |
 
 ---
 
@@ -120,7 +120,7 @@ Docker stack managed via **Portainer**.
 
 ### February 2026 — Infrastructure Deep-Dive
 - **Audited Proxmox Host:** Verified Kernel 6.17 and PVE 9.1 stability.
-- **Hardware Inventory:** Documented GTX 1070 status and mapped out Distro Lab inventory (VMIDs 101-108).
+- **Hardware Inventory:** Documented GTX 1070 status and mapped out Distro Lab inventory (VMIDs 100-109).
 - **Network Mapping:** Finalized SDN `testnet` logic and implemented the `VMID-to-IP` mapping system (10.10.100.1xx).
 - **Strategic Roadmap:** Expanded goals to include SIEM (Wazuh), Proxy (NPM), Managed Switching, and DNS.
 
