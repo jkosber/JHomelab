@@ -12,15 +12,7 @@ The lab is designed to simulate **enterprise-level IT and security concepts** wi
 **Device:** TP-Link AX6600 Tri-Band Wi-Fi 6 Router  
 **Primary Functions:**
 - Core routing and DHCP
-- VLAN trunking and firewall management
-- VPN endpoint
-
-**Enabled Features:**
-- **IP/MAC binding** for static infrastructure endpoints (Proxmox hosts, NAS, main PC)
-- **Port forwarding** for internal services (Caddy HTTP/HTTPS, qBittorrent)
-- **Dynamic DNS** using a custom No-IP domain to maintain VPN access despite ISP IP changes
-- **VPN:** OpenVPN
-- **Network-wide ad blocking:** Pi-hole
+- firewall management
 
 ---
 
@@ -134,8 +126,7 @@ Docker stack managed via Portainer at `https://192.168.0.159:9443`.
   - Ubuntu Desktop
   - Kali Linux
 - Verified:
-  - Static IP assignments
-  - AdGuard DNS configuration
+  - Static/dynamic IP assignments
   - Gateway routing
   - IP sanitation and connectivity via Linux CLI tools
 
@@ -148,6 +139,7 @@ This homelab is **actively maintained and expanded**. Future improvements includ
 - Expanded VLAN architecture
 - Improved access layer design
 - Additional security monitoring and logging tools
+- Pihole
 
 ---
 
