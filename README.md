@@ -9,13 +9,11 @@ This repository documents my personal **home lab environment**, built to strengt
 ### 🌐 Layer 3: Core Routing
 * **Device:** TP-Link AX6600 Tri-Band Wi-Fi 6 Router
 * **Functions:** Core routing, DHCP, and Firewall management.
-* **Primary SSIDs:** * `SSID_ExistingNetwork` (General Use)
-    * `SSID_HomelabNetwork` (Dedicated Lab Access)
 
-### 📶 Layer 2: Distribution & Access
-* **Current:** WN2000RPTv2 (Wireless Bridge mode).
-* **🚧 Planned Upgrade:** Physical **Cat6 Ethernet** backhaul to replace wireless bridging for gigabit stability.
-* **🚧 Segmentation:** Implementation of **VLAN Firewall Rules** to strictly isolate the Cyber Lab from the Home Production network.
+### 📶 Layer 2: Distribution & Access (Evolution Path)
+* **Current State:** WN2000RPTv2 (Wireless Bridge mode).
+* **🚧 Tier 1 Upgrade:** Physical **Cat6 Ethernet** backhaul to replace wireless bridging.
+* **🚧 Tier 2 Upgrade:** **Managed Switch Implementation**. This is required to enable **Physical VLAN Segmentation**, allowing hardware-level isolation between the Home LAN, Lab SDN, and IoT devices.
 
 ---
 
@@ -83,15 +81,16 @@ Docker stack managed via **Portainer**.
 
 ### 🛠️ Core Infrastructure & Services
 - [ ] **Ethernet Overhaul**: Replace wireless bridge with physical Cat6 cabling.
-- [ ] **Nginx Proxy Manager**: Implement clean internal domains (e.g., `proxmox.home`, `kuma.home`).
-- [ ] **Internal DNS**: Deploy **AdGuard Home** or **Pi-hole** for network-wide ad-blocking and DNS sinkhole.
-- [ ] **NAS VM**: Build a dedicated NAS VM to manage the 1TB HDD and provide SMB/NFS shares.
+- [ ] **Managed Switch**: Procure and configure for **Physical VLAN tagging (802.1Q)**.
+- [ ] **Nginx Proxy Manager**: Implement clean internal domains (e.g., `proxmox.home`).
+- [ ] **Internal DNS**: Deploy **AdGuard Home** or **Pi-hole**.
+- [ ] **NAS VM**: Dedicated storage VM for SMB/NFS using the 1TB HDD.
 
 ### 🛡️ Cybersecurity Lab Expansion
-- [ ] **Tailscale Subnet Router**: Centralize remote access on VM 109 for the `10.10.100.x` range.
-- [ ] **VLAN Firewall Rules**: Implement strict segmentation between Home LAN and Lab SDN.
-- [ ] **Wazuh / Security Onion**: Deploy enterprise SIEM and IDS to monitor attack traffic within the lab.
-- [ ] **Jellyfin**: Deploy via Docker on VM 109 with GTX 1070 hardware transcoding.
+- [ ] **Tailscale Subnet Router**: Centralize remote access on VM 109.
+- [ ] **VLAN Firewall Rules**: Strict segmentation enforced at the OPNsense/Switch level.
+- [ ] **Wazuh / Security Onion**: Deploy enterprise SIEM and IDS for traffic monitoring.
+- [ ] **Jellyfin**: Hardware-accelerated media server using the GTX 1070.
 
 ---
 
@@ -105,6 +104,6 @@ Docker stack managed via **Portainer**.
 
 ### February 2026 — Infrastructure Deep-Dive
 - **Audited Proxmox Host:** Verified Kernel 6.17 and PVE 9.1 stability.
-- **Hardware Inventory:** Documented GTX 1070 passthrough status and storage distribution.
+- **Hardware Inventory:** Documented GTX 1070 passthrough status.
 - **Network Mapping:** Finalized SDN `testnet` logic and implemented the `VMID-to-IP` mapping system.
-- **Roadmap Expanded:** Integrated SIEM (Wazuh), Proxy (NPM), and DNS (AdGuard/Pi-hole) into long-term goals.
+- **Strategic Roadmap:** Defined path for **Managed Switching** and **Physical VLAN** implementation.
