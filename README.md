@@ -59,6 +59,14 @@ The lab uses Proxmox's built-in SDN to keep production-style traffic on the home
 
 Lab VMs use a one-to-one mapping where the last octet matches the VMID. Example: VM **105** → IP **10.10.100.105**. This trivially correlates the Proxmox inventory with packet captures and firewall logs.
 
+### Firewall posture
+
+The Datacenter-level firewall holds the current allowlist — outbound from the `testnet` SDN to the internet, inbound DNS / DHCP for the lab zone, and a tight management ACL (ICMP, SSH on TCP/22, and PVE web UI on TCP/8006) restricted to the management interface group.
+
+![Datacenter firewall rules — SDN egress, DNS/DHCP for testnet, plus ICMP / SSH / web UI on the management interface](screenshots/datacenter-firewall.png)
+*Datacenter > Firewall view — seven active allow rules covering SDN-to-internet egress, in-zone DNS / DHCP, and the management plane (Ping, SSH, port 8006). Per-VNet firewall (under SDN) and per-VM rules are reserved for the next round of segmentation work.*
+
+
 ## Phase 3 — Virtual machine inventory
 
 Total RAM assigned (~48 GB) intentionally exceeds physical (16 GB); only VM 109 (core infra) is set to auto-boot, so memory is over-provisioned only when a specific lab scenario is running.
