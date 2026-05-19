@@ -63,6 +63,10 @@ Lab VMs use a one-to-one mapping where the last octet matches the VMID. Example:
 
 Total RAM assigned (~48 GB) intentionally exceeds physical (16 GB); only VM 109 (core infra) is set to auto-boot, so memory is over-provisioned only when a specific lab scenario is running.
 
+![Datacenter inventory — VMs 100-109, zones, and storage as seen in the Proxmox VE 9.1 web UI](screenshots/datacenter-inventory.png)
+*Datacenter view in the Proxmox VE web UI — all VMs (100–109), SDN zones (`localnetwork`, `test`), the `jhome` node, and the three storage pools (`local`, `local-lvm`, `vmdata`) at a glance.*
+
+
 ### Infrastructure / high-performance
 
 | VMID | Name             | IP Address          | OS               | RAM  | Status   | Role                                       |
@@ -111,6 +115,9 @@ Docker stack managed via Portainer.
 - Stand up Jellyfin with hardware acceleration against the GTX 1070.
 
 ## Maintenance and configuration notes
+
+![Node-level configuration view for the jhome host — System, Firewall, Disks, Ceph submenus](screenshots/node-jhome-config.png)
+*Node-level configuration tree for the `jhome` host — Network, Certificates, DNS, Firewall, Disks (LVM, LVM-Thin, ZFS, Directory) and Repositories are where most of the host-level maintenance work happens.*
 
 - PCI ACS override active in GRUB: `pcie_acs_override=downstream,multifunction`.
 - IOMMU verified for NVIDIA GP104BM (GTX 1070 Mobile) — bound to `vfio-pci`.
