@@ -1,144 +1,143 @@
-# 🛸 JHomelab: Master Infrastructure Documentation
+# JHomelab — Personal Proxmox Lab Documentation
 
-This repository documents my personal **home lab environment**, built to strengthen skills in **networking, systems administration, virtualization, and cybersecurity**.  
+This repository documents my personal home lab built on Proxmox VE. It is the running journal for the infrastructure, networking, and security work I do outside of class and the dental-IT internship — virtualization, SDN-based segmentation, Linux administration, Docker services, and an ongoing roadmap toward SIEM, managed switching, and reverse-proxy deployment.
 
-The lab is designed to simulate **enterprise-level IT and security concepts** within a home setting and is continuously evolving as new technologies and configurations are introduced.
+The lab is intentionally designed to mirror small-enterprise patterns (segmented zones, IPAM, change logging, reproducible builds) inside a single home network, and it evolves as I work through new coursework and homelab projects.
 
----
+## Repository contents
 
-## 🧩 System Architecture Overview
+This repository is currently documentation-only — the source of truth for layout, addressing, and configuration decisions. Sanitized configs (SDN exports, firewall rule snapshots, container compose files, Bash provisioning scripts) will be committed as separate sub-directories once they reach a stable state. The accompanying course-dump repositories ([SVAD-111-Linux-Virtualization](https://github.com/jkosber/SVAD-111-Linux-Virtualization), [Networking-109](https://github.com/jkosber/Networking-109), [CyberOps-115](https://github.com/jkosber/CyberOps-115)) hold the formal lab artifacts that fed into the homelab build.
 
-### 🌐 Core Network Layer
-* **Device:** TP-Link AX6600 Tri-Band Wi-Fi 6 Router  
-* **Primary Functions:** Core routing, DHCP, and firewall management.
+## Skills demonstrated
 
-### 📶 Distribution / Switch Layer
-* **Device:** Netgear WN2000RPTv2 – Universal Wi-Fi Range Extender  
-* **Status:** SSID broadcasting disabled.  
-* **Function:** Wireless bridge / access point to extend network connectivity to lab infrastructure.  
-* **🚧 Planned Upgrade:** Transition to **Physical Cat6 Ethernet** backhaul for gigabit stability.
+- Hypervisor administration (Proxmox VE 9.1, kernel 6.17)
+- Software-defined networking (PVE SDN, VNets, managed IPAM/DHCP)
+- Subnetting and per-zone addressing strategy (VMID → IP mapping)
+- Linux administration across distribution families (Debian/Ubuntu, RHEL/Fedora, Arch, SUSE, etc.)
+- PCI passthrough and VFIO isolation for a discrete GPU
+- Docker via Portainer (Homepage, Uptime Kuma; reverse-proxy and remote-support work on the roadmap)
+- Documentation discipline — architecture overview, inventory, change log, roadmap kept in source control
 
-### 🔌 Access Layer
-* **Status:** Work in Progress.  
-* **Planned:** Additional segmentation and access control for endpoint devices.  
-* **🚧 Tier 2 Upgrade:** **Managed Switch Implementation**. Required to enable **Physical VLAN Segmentation** (802.1Q) for hardware-level isolation.
+## System architecture
 
----
+### Core network layer
+- TP-Link AX6600 Tri-Band Wi-Fi 6 router — primary routing, DHCP, and edge firewall.
 
-## 🏗️ Phase 1: Physical Host (`jhome`)
-**Hardware:** Alienware 15 R3 | **Hypervisor:** Proxmox VE 9.1.0 | **Management IP:** `192.168.0.2`
+### Distribution / extension layer
+- Netgear WN2000RPTv2 universal Wi-Fi range extender — SSID broadcast disabled, used as a wireless bridge into the lab segment.
+- Planned upgrade: replace the wireless bridge with a physical Cat6 backhaul for gigabit stability.
 
-| Component | Specification | Pool / Usage |
-| :--- | :--- | :--- |
-| **CPU** | Intel i7-7700HQ (4C/8T) | Core Compute |
-| **RAM** | 16 GB DDR4 | Over-provisioned Lab Pool |
-| **GPU (Host)** | Intel HD Graphics 630 | Console / Host Display |
-| **GPU (VM)** | **NVIDIA GTX 1070 Mobile** | Bound to `vfio-pci` (Target: VM 100/109) |
-| **SSD (120GB)** | SK Hynix | `local`, `local-lvm` (OS & ISOs) |
-| **HDD (1TB)** | HGST | `vmdata` (Primary VM Store / NAS Target) |
+### Access layer
+- Currently flat at the access layer. Planned upgrade: introduce a managed switch to support hardware-level 802.1Q VLAN segmentation between home, lab, and management zones.
 
----
+## Physical host — `jhome`
 
-## 🌐 Phase 2: SDN & IPAM Logic
-The lab utilizes **Software Defined Networking (SDN)** to isolate production traffic from experimental zones.
+| Component       | Specification                | Role / Pool                                                  |
+| :-------------- | :--------------------------- | :----------------------------------------------------------- |
+| Platform        | Alienware 15 R3              | Hypervisor host                                              |
+| Hypervisor      | Proxmox VE 9.1.0 / kernel 6.17 | Bare metal                                                   |
+| Management IP   | `192.168.0.2`                | Reached over the home LAN at `https://192.168.0.2:8006`      |
+| CPU             | Intel i7-7700HQ (4C / 8T)    | Core compute                                                 |
+| RAM             | 16 GB DDR4                   | Over-provisioned lab pool (~48 GB assigned across VMs)       |
+| GPU (host)      | Intel HD Graphics 630        | Console / host display                                       |
+| GPU (passthrough) | NVIDIA GTX 1070 Mobile    | Bound to `vfio-pci`, target VM 100 / 109                     |
+| SSD             | SK Hynix 120 GB              | `local`, `local-lvm` — OS, ISOs                              |
+| HDD             | HGST 1 TB                    | `vmdata` — primary VM store / NAS target                     |
 
+## Phase 2 — SDN and IPAM
 
+The lab uses Proxmox's built-in SDN to keep production-style traffic on the home LAN isolated from experimental zones used for cyber range and distro testing.
 
-### 🗺️ Network Zones
-| Name | Bridge/VNet | Subnet | IPAM Strategy | Gateway |
-| :--- | :--- | :--- | :--- | :--- |
-| **Home LAN** | `vmbr0` | `192.168.0.0/24` | Static / External DHCP | `192.168.0.1` |
-| **Lab SDN** | `testnet` | `10.10.100.0/24` | **PVE IPAM (Dynamic DHCP)** | `10.10.100.1` |
+### Network zones
 
-> [!IMPORTANT]
-> **Static Mapping Logic**: Lab VMs utilize a 1:1 mapping where the last octet matches the VMID suffix.  
-> *Example: VM **105** → IP **10.10.100.105***
+| Zone     | Bridge / VNet | Subnet            | IPAM Strategy             | Gateway        |
+| :------- | :------------ | :---------------- | :------------------------ | :------------- |
+| Home LAN | `vmbr0`       | `192.168.0.0/24`  | Static / external DHCP    | `192.168.0.1`  |
+| Lab SDN  | `testnet`     | `10.10.100.0/24`  | PVE IPAM (dynamic DHCP)   | `10.10.100.1`  |
 
----
+### Addressing convention
 
-## 🖥️ Phase 3: Virtual Machine Inventory
-> **RAM Strategy**: Total assigned (~48GB) > Physical (16GB). Only **VM 109** is set to **Auto-Boot**.
+Lab VMs use a one-to-one mapping where the last octet matches the VMID. Example: VM **105** → IP **10.10.100.105**. This trivially correlates the Proxmox inventory with packet captures and firewall logs.
 
-### 🏠 Infrastructure & High-Performance
-| VMID | Name | IP Address | OS | RAM | Status | Role |
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **109** | `Ubuntu-Server` | **192.168.0.159** | Ubuntu 24.04 | 2 GB | **Running** | Core Infra / Docker |
-| **100** | `Ubuntu-Desktop`| **10.10.100.100** | Ubuntu Desktop | 8 GB | Stopped | Workstation / **Current Tailscale** |
-| **102** | `opnsense` | **10.10.100.102** | FreeBSD | 3 GB | **🚧 WIP** | Lab Gateway (Single-NIC) |
+## Phase 3 — Virtual machine inventory
 
-### 🧪 Cyber Range & Distro Lab (SDN: `testnet`)
-| VMID | Name | IP Address | OS Distro | RAM | Disk |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| **101** | `Kali` | **10.10.100.101** | Kali Linux | 2 GB | 30 GB |
-| **103** | `OpenSUSE-Desktop`| **10.10.100.103** | OpenSUSE Tumbleweed | 4 GB | 30 GB |
-| **104** | `Fedora-Desktop` | **10.10.100.104** | Fedora 40 | 4 GB | 30 GB |
-| **105** | `ZorinOS` | **10.10.100.105** | Zorin OS 17 | 8 GB | 40 GB |
-| **106** | `Manjaro-Desktop` | **10.10.100.106** | Manjaro (Arch) | 4 GB | 30 GB |
-| **107** | `Linux-Mint` | **10.10.100.107** | Linux Mint 21 | 4 GB | 30 GB |
-| **108** | `PopOS` | **10.10.100.108** | Pop!_OS | 8 GB | 30 GB |
+Total RAM assigned (~48 GB) intentionally exceeds physical (16 GB); only VM 109 (core infra) is set to auto-boot, so memory is over-provisioned only when a specific lab scenario is running.
 
----
+### Infrastructure / high-performance
 
-## 📦 Phase 4: Primary Services (VM 109)
-Docker stack managed via **Portainer**.
+| VMID | Name             | IP Address          | OS               | RAM  | Status   | Role                                       |
+| :--- | :--------------- | :------------------ | :--------------- | :--- | :------- | :----------------------------------------- |
+| 109  | `Ubuntu-Server`  | `192.168.0.159`     | Ubuntu 24.04     | 2 GB | Running  | Core infra / Docker host                   |
+| 100  | `Ubuntu-Desktop` | `10.10.100.100`     | Ubuntu Desktop   | 8 GB | Stopped  | Workstation / current Tailscale node       |
+| 102  | `opnsense`       | `10.10.100.102`     | FreeBSD          | 3 GB | WIP      | Lab gateway (single-NIC build in progress) |
 
-| Service | Port | Description |
-| :--- | :--- | :--- |
-| **Homepage** | `3000` | Central Dashboard |
-| **Uptime Kuma** | `3001` | Service Health Monitoring |
-| **Portainer** | `9443` | Container Orchestration |
-| **Nginx Proxy Manager**| `81` | (Planned) Reverse Proxy/SSL Management |
-| **RustDesk Server** | `21115+` | (Planned) Self-hosted Remote Support |
+### Cyber range / distro lab on `testnet`
 
----
+| VMID | Name               | IP Address       | OS Distribution        | RAM  | Disk  |
+| :--- | :----------------- | :--------------- | :--------------------- | :--- | :---- |
+| 101  | `Kali`             | `10.10.100.101`  | Kali Linux             | 2 GB | 30 GB |
+| 103  | `OpenSUSE-Desktop` | `10.10.100.103`  | OpenSUSE Tumbleweed    | 4 GB | 30 GB |
+| 104  | `Fedora-Desktop`   | `10.10.100.104`  | Fedora 40              | 4 GB | 30 GB |
+| 105  | `ZorinOS`          | `10.10.100.105`  | Zorin OS 17            | 8 GB | 40 GB |
+| 106  | `Manjaro-Desktop`  | `10.10.100.106`  | Manjaro (Arch)         | 4 GB | 30 GB |
+| 107  | `Linux-Mint`       | `10.10.100.107`  | Linux Mint 21          | 4 GB | 30 GB |
+| 108  | `PopOS`            | `10.10.100.108`  | Pop!_OS                | 8 GB | 30 GB |
 
-## 🎯 Phase 5: Future Roadmap & Goals
+## Phase 4 — Primary services on VM 109
 
-### 🛠️ Core Infrastructure & Services
-- [ ] **Ethernet Overhaul**: Replace wireless bridge with physical Cat6 cabling.
-- [ ] **Managed Switch**: Procure and configure for **Physical VLAN tagging (802.1Q)**.
-- [ ] **Nginx Proxy Manager**: Implement clean internal domains (e.g., `proxmox.home`).
-- [ ] **Internal DNS**: Deploy **AdGuard Home** or **Pi-hole**.
-- [ ] **NAS VM**: Dedicated storage VM for SMB/NFS using the 1TB HDD.
+Docker stack managed via Portainer.
 
-### 🛡️ Cybersecurity Lab Expansion
-- [ ] **Tailscale Subnet Router**: Centralize remote access on **VM 109** to replace **VM 100** instance.
-- [ ] **VLAN Firewall Rules**: Strict hardware/software segmentation between zones.
-- [ ] **Wazuh / Security Onion**: Deploy enterprise SIEM and IDS for traffic monitoring.
-- [ ] **Jellyfin**: Hardware-accelerated media server using the GTX 1070.
+| Service              | Port    | Status   | Description                                |
+| :------------------- | :------ | :------- | :----------------------------------------- |
+| Homepage             | 3000    | Running  | Central dashboard                          |
+| Uptime Kuma          | 3001    | Running  | Service health monitoring                  |
+| Portainer            | 9443    | Running  | Container orchestration                    |
+| Nginx Proxy Manager  | 81      | Planned  | Reverse proxy + SSL management             |
+| RustDesk Server      | 21115+  | Planned  | Self-hosted remote support                 |
 
----
+## Phase 5 — Roadmap
 
-## 💾 Maintenance & Configs
-* **PCI Isolation:** `pcie_acs_override=downstream,multifunction` active in GRUB.
-* **IOMMU Health:** NVIDIA GP104BM verified bound to `vfio-pci`.
-* **SDN Configs:** `/etc/pve/sdn/`
+### Core infrastructure and services
+- Replace the wireless bridge with physical Cat6 backhaul.
+- Procure and configure a managed switch for 802.1Q VLAN tagging.
+- Stand up Nginx Proxy Manager and assign internal hostnames (e.g., `proxmox.home`).
+- Deploy internal DNS — AdGuard Home or Pi-hole.
+- Carve out a dedicated NAS VM on the 1 TB HDD for SMB / NFS shares.
 
----
+### Cybersecurity lab expansion
+- Move the Tailscale subnet router onto VM 109 to replace the VM-100 instance.
+- Author per-zone firewall rules in PVE for strict hardware/software segmentation.
+- Deploy Wazuh or Security Onion for SIEM and IDS coverage of inter-zone traffic.
+- Stand up Jellyfin with hardware acceleration against the GTX 1070.
 
-## 🧾 Operational Journal (Changelog)
+## Maintenance and configuration notes
 
-### February 2026 — Infrastructure Deep-Dive
-- **Audited Proxmox Host:** Verified Kernel 6.17 and PVE 9.1 stability.
-- **Hardware Inventory:** Documented GTX 1070 status and mapped out Distro Lab inventory (VMIDs 100-109).
-- **Network Mapping:** Finalized SDN `testnet` logic and implemented the `VMID-to-IP` mapping system (10.10.100.1xx).
-- **Strategic Roadmap:** Expanded goals to include SIEM (Wazuh), Proxy (NPM), Managed Switching, and DNS.
+- PCI ACS override active in GRUB: `pcie_acs_override=downstream,multifunction`.
+- IOMMU verified for NVIDIA GP104BM (GTX 1070 Mobile) — bound to `vfio-pci`.
+- SDN configuration lives under `/etc/pve/sdn/` on the host.
 
-### January 2026 — Foundational Phase
-- Repurposed TP-Link AX6600 as the core routing device.
-- Segmented wireless network into two SSIDs: `SSID_ExistingNetwork` and `SSID_HomelabNetwork`.
-- Installed **Proxmox Virtual Environment** on Alienware host.
-- Created initial VM stack (Ubuntu Server, Ubuntu Desktop, Kali Linux).
-- **Verified:**
-  - Static/dynamic IP assignments.
-  - Gateway routing.
-  - IP sanitation and connectivity via Linux CLI tools.
+## Operational journal
 
----
+### April 2026 — Service-tier refinement
+- Reaffirmed VM 109 as the only auto-boot host so the over-provisioned RAM pool only loads on demand.
+- Catalogued the existing Docker stack and identified Nginx Proxy Manager + RustDesk Server as the next priorities.
 
-## 📌 Goals
+### February 2026 — Infrastructure deep-dive
+- Audited Proxmox host: confirmed kernel 6.17 and PVE 9.1 stable.
+- Hardware inventory: documented GTX 1070 passthrough state and finalized distro-lab inventory (VMIDs 100–109).
+- Network mapping: locked in SDN `testnet` logic and the VMID-to-IP convention.
+- Roadmap expanded to include SIEM (Wazuh), reverse proxy (NPM), managed switching, and internal DNS.
 
-- Simulate real-world enterprise networking environments.
-- Gain hands-on experience with virtualization and network segmentation.
-- Practice security hardening, monitoring, and access control.
-- Build a documented, reproducible lab suitable for learning and experimentation.
+### January 2026 — Foundational phase
+- Repurposed the TP-Link AX6600 as the core router.
+- Split wireless into two SSIDs: `SSID_ExistingNetwork` and `SSID_HomelabNetwork`.
+- Installed Proxmox VE on the Alienware host.
+- Brought up the initial VM stack — Ubuntu Server, Ubuntu Desktop, Kali Linux.
+- Verified static and dynamic addressing, gateway routing, and connectivity from the Linux CLI.
+
+## Goals
+
+- Practice enterprise-style network segmentation, IPAM, and change logging at home-lab scale.
+- Maintain hands-on familiarity with virtualization, Linux administration, and Docker services.
+- Build a documented, reproducible lab that I can rebuild from notes if the host is wiped.
+- Use the lab as the substrate for security tooling (SIEM, IDS, packet capture) as coursework expands into them.
