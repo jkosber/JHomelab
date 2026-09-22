@@ -82,11 +82,11 @@ GoodMem's running server uses an image tagged `latest`; that tag is mutable. The
 
 Nginx Proxy Manager and RustDesk remain previously recorded deployment ideas; this scan did not establish whether they are installed.
 
-## Planned SDN implementation
+## SDN configuration and planned service rollout
 
-The SDN is configured for selected experimental VMs that do not provide the services I currently use. Its implementation remains planned; it is not a dependency of the running service workloads. This scope was clarified on September 22, 2026.
+The SDN is already configured on selected non-service VMs. Extending it to the service VMs is planned. The running service workloads do not currently depend on the SDN. This scope was clarified on September 22, 2026.
 
-The preparatory Proxmox configuration includes a Simple SDN zone and a distinct VNet object, with PVE IPAM, dnsmasq DHCP, and source NAT. Zone and VNet names are different objects; older documentation conflated them. A DNS/DHCP listener and the NAT rule were present during this scan.
+The existing Proxmox configuration includes a Simple SDN zone and a distinct VNet object, with PVE IPAM, dnsmasq DHCP, and source NAT. Zone and VNet names are different objects; older documentation conflated them. A DNS/DHCP listener and the NAT rule were present during this scan.
 
 **Isolation, address assignment, and internet access from an experimental guest were not tested.** All experimental VMs were stopped, and none were started for the scan. The previously described per-guest address convention remains an intention rather than verified lease state.
 
@@ -101,7 +101,7 @@ Previously recorded physical-network equipment includes a TP-Link AX6600 router 
 - Review the persistent boot SSD alerts and verify recoverable backups before disk maintenance.
 - Establish backup coverage and test restoration. One experimental guest's primary disk explicitly has `backup=0`.
 - Restore service-VM observability by checking guest-agent installation/service state and approved SSH access.
-- As part of the planned SDN implementation, review firewall rule intent and runtime state, then test allowed and denied traffic, DHCP, and egress from an intentionally started lab guest.
+- Before extending the SDN to service VMs, review firewall rule intent and runtime state, then test allowed and denied traffic, DHCP, and egress from an intentionally started lab guest.
 - Verify GPU use inside a selected guest before claiming working hardware acceleration.
 
 The running kernel command line includes `intel_iommu=on`, `iommu=pt`, and `pcie_acs_override=downstream`. The earlier claim that `multifunction` was also enabled is not supported by this scan. The NVIDIA device is bound to `vfio-pci`; no passthrough or boot settings were changed.
@@ -111,7 +111,7 @@ The running kernel command line includes `intel_iommu=on`, `iommu=pt`, and `pcie
 These are existing ideas, not newly selected work or verified deployments:
 
 - Replace the wireless bridge backhaul with Cat6.
-- Complete the planned SDN implementation for selected non-service lab VMs.
+- Extend the existing non-service VM SDN configuration to service VMs after validation.
 - Add managed switching and VLAN practice.
 - Evaluate Nginx Proxy Manager, internal DNS, and RustDesk.
 - Explore a dedicated NAS guest for SMB/NFS.
@@ -128,7 +128,7 @@ These are existing ideas, not newly selected work or verified deployments:
 - Added the running GoodMem LXC service and its observed container state.
 - Recorded persistent SSD warnings, backup inventory gaps, and service-VM access limits.
 - Replaced untested isolation and deployment claims with dated evidence and explicit limits.
-- Clarified that SDN implementation is planned for selected non-service VMs; running services do not depend on it.
+- Clarified that SDN is already configured on non-service VMs; extending it to service VMs is planned.
 - Replaced historical screenshots with current tables and removed internal connection details from this revision. Older Git history still contains the original material; history was not rewritten.
 - Made no infrastructure changes. See the [full scan report](docs/health-check-2026-09-22.md).
 

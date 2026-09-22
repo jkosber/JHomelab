@@ -54,7 +54,7 @@ The service VM has guest-agent support enabled in PVE, but the ping command repo
 
 ## SDN and firewall evidence
 
-Jadon clarified that this SDN is configured for selected VMs that do not provide his everyday services, and its implementation remains planned. Existing configuration is preparatory evidence, not a claim of a completed or required service network.
+Jadon clarified that the SDN is already configured on selected non-service VMs; extending it to service VMs is planned. The hypervisor configuration shows the experimental VMs attached to the SDN VNet, while the running service VM and GoodMem LXC use the existing service network. Configuration was verified; traffic through the stopped experimental guests was not tested.
 
 - A Simple zone, a separate VNet, PVE IPAM, a DHCP range, a gateway, and source NAT are configured. Zone and VNet must not be treated as the same object.
 - dnsmasq was listening for DNS and DHCP on the lab interface, and a source-NAT rule was present.
@@ -64,7 +64,7 @@ Jadon clarified that this SDN is configured for selected VMs that do not provide
 - The running guests' firewall option queries returned no explicit option values. This does not prove guest firewall enforcement.
 - The host management bridge had zero reported RX/TX errors or drops at scan time.
 
-All experimental guests were stopped. There was no DHCP lease acquisition test, guest-to-internet test, or denied-traffic test across the intended boundary. The scan does not establish isolation or successful lab routing. Review policy intent and runtime state when proceeding with the planned implementation; these findings do not establish an outage of the services currently in use.
+All experimental guests were stopped. There was no DHCP lease acquisition test, guest-to-internet test, or denied-traffic test across the intended boundary. The scan does not establish isolation or successful lab routing. Review policy intent and runtime state before the planned extension to service VMs; these findings do not establish an outage of the services currently in use.
 
 ## Repeating the checks
 
