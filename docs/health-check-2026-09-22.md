@@ -1,99 +1,66 @@
-# Read-only homelab scan — September 22, 2026
+# Homelab health check — September 22, 2026
 
-## Scope and method
+A read-only check of the Proxmox host, guest inventory and running services. Nothing was restarted or reconfigured, and the stopped lab VMs stayed stopped.
 
-The scan ran from the Windows workstation against the known Proxmox host over SSH with strict host-key checking. It inspected host and guest configuration, runtime status, storage health, backup inventory, SDN/firewall settings, service endpoints, and the running GoodMem LXC workload. Public descriptions omit operational addresses, hostnames, guest identifiers, and raw configuration output.
+The [README](../README.md) has the network layout, current inventory and fresh Proxmox screenshots. Local IPs have their last number replaced with `X`.
 
-Checks were read-only. No guests were started or stopped, no services restarted, no SMART tests launched, and no infrastructure configuration changed. This was an inventory and health check of the known Proxmox environment, not a network-wide vulnerability scan. Router administration, other physical hosts, external backup destinations, and stopped-guest operating systems were outside the checked scope.
+## Proxmox and guests
 
-## Host and runtime
+- Proxmox VE 9.2.20, running kernel 7.0.14-17-pve.
+- Alienware 15 R3, Intel i7-7700HQ and 16 GB DDR4.
+- VM 109 and CT 110 running, both set to auto-boot. VMs 100–108 stopped.
+- Core Proxmox services active, with no failed systemd units listed.
+- GTX 1070 Mobile bound to `vfio-pci` and assigned in the configs for VMs 100, 105, 107 and 108. VM 109 has no GPU assignment. Passthrough wasn't tested inside a guest.
 
-| Check | Observation | Limit |
+The [guest tables](../README.md#virtual-machines) use the current Proxmox resource settings. RAM is rounded to GB there; VM 108's exact allocation is 8196 MiB. Installed releases in the stopped VMs weren't checked.
+
+## Running services
+
+| Host | Service | Check |
 | :--- | :--- | :--- |
-| Version | PVE manager 9.2.20; running kernel 7.0.14-17-pve | Installed/runtime state at scan time |
-| Hardware | Alienware 15 R3, i7-7700HQ, 16 GB DDR4 | Firmware inventory and CPU output |
-| Resources | About 11 GiB memory available; swap unused; root filesystem 69% used | Point-in-time usage |
-| Core services | PVE cluster, daemon, proxy, status, scheduler, legacy firewall, and SMART services active | Does not test every service operation |
-| Failed units | None listed on the host or GoodMem LXC | Limited to systemd's reported state |
-| Guest inventory | Ten VMs and one LXC; service VM and LXC running | Stopped guests were not exercised |
-| GPU | GTX 1070 Mobile bound to `vfio-pci`; four stopped desktops have assignments | Guest passthrough and acceleration untested |
+| Proxmox | Web UI | Responded over HTTPS; inventory, firewall and IPAM pages inspected |
+| VM 109 | Homepage | HTTP 200 |
+| VM 109 | Uptime Kuma | HTTP 200 after redirect |
+| VM 109 | Portainer | HTTPS 200 |
+| CT 110 | GoodMem | Docker health check healthy; API responded with version `server-v1.0.285` |
+| CT 110 | PostgreSQL / pgvector | Container running, image `pgvector/pgvector:pg17` |
 
-The [README inventory](../README.md#guest-inventory) records the observed resource allocations. The Kali VM has two sockets with two cores each, so its configured total is four vCPUs. Exact distribution releases in stopped VMs were not inferred from their display names.
+CT 110 is an unprivileged Debian 13.1 container with 2 cores, 4 GB RAM, 512 MiB swap and a 24 GB disk. GoodMem publishes REST on 8080 and gRPC on 9090; PostgreSQL uses 5432. Reachability wasn't checked separately for every port.
 
-## Storage and recovery
+VM 109's guest agent wasn't running, and the SSH login attempt was denied. Its Docker inventory and installed Ubuntu version couldn't be checked directly. The web checks above show the services responding; individual app workflows weren't tested. HTTPS probes allowed the local self-signed certificates.
 
-All three configured storage pools were active. PVE pool usage was 65.33% for local directory storage, 0.01% for the boot-disk LVM-thin pool, and 23.96% for the guest LVM-thin pool. The guest HDD is separate from the host boot SSD; this layout does not by itself provide a backup.
+## Storage and backups
 
-| Device | SMART evidence | Interpretation |
-| :--- | :--- | :--- |
-| Boot SSD | Overall PASSED; `Offline_Uncorrectable=24`, `Reported_Uncorrect=3`, `End-to-End_Error=3`, `Reallocated_Event_Count=0`, `UDMA_CRC_Error_Count=0` | Persistent warning despite the overall result |
-| Guest HDD | Overall PASSED; reported reallocated-sector, offline-uncorrectable, and CRC counts all zero; no SMART errors logged | No warning in these inspected fields; not a recovery test |
+All three storage pools were active.
 
-The SSD's three nonzero error counters match the September 10 observation. Repeated `smartd` messages still report 24 offline-uncorrectable sectors. Its recorded self-test history includes aborted tests; no fresh self-test was run. A targeted search of the current boot's kernel journal found no matching block I/O, ATA failure, or ext4 error messages. That does not clear the SMART warning or establish future drive reliability.
+| Pool | Use |
+| :--- | :--- |
+| `local` | 65.33% |
+| `local-lvm` | 0.01% |
+| `vmdata` | 23.96% |
 
-The Proxmox scheduled-backup inventory was empty, and configured local backup storage listed no backup volumes. No external backup storage was configured in the inspected PVE storage inventory. Manual/off-host copies may exist and were not searched. No restore test was performed. One experimental VM's primary disk is explicitly excluded from PVE backup with `backup=0`.
+The boot SSD's overall SMART result was PASSED, but the warnings from September 10 remain: 24 offline-uncorrectable sectors, 3 reported-uncorrectable errors and 3 end-to-end errors. The counts haven't increased. The HDD passed, with zero reported reallocated sectors, uncorrectable sectors or CRC errors.
 
-Follow-up: verify recoverable guest and host-configuration backups, review the SSD warning, and assess disk maintenance separately. This scan made no backup or disk changes.
+No scheduled Proxmox backup jobs or local backup files were listed. Manual or off-host copies weren't checked, and no restore test was run. VM 106's primary disk has `backup=0`.
 
-## Application observations
+Backup coverage and the SSD warning need a separate follow-up before disk work.
 
-| Target | Observed evidence | Unchecked |
-| :--- | :--- | :--- |
-| Proxmox web UI | HTTP 200 over HTTPS | Authentication and administrative workflows |
-| Homepage | HTTP 200 | Dashboard integrations |
-| Uptime Kuma | HTTP 200 after redirect | Monitor execution and notification delivery |
-| Portainer | HTTP 200 over HTTPS | Container-management operations |
-| GoodMem server | Docker health status healthy; API responded, advertising `server-v1.0.285` | Recovery and full application workflows |
-| PostgreSQL/pgvector | Docker container running with image tag `pgvector/pgvector:pg17` | Database integrity and restoration |
+## SDN and firewall
 
-HTTP checks were issued from the workstation with timeouts. HTTPS checks permitted the existing self-signed certificates, so they establish an HTTP response, not certificate trust. No public exposure claim is made from these local checks.
+The SDN is already configured for non-service VMs 100–108. They use VNet `testnet` in zone `test`, with the `10.10.100.X/24` address scheme. IPAM has mappings for the gateway and those VMs. dnsmasq and a source-NAT rule were present.
 
-The GoodMem LXC runs Debian 13.1 with two vCPUs, 4096 MiB RAM, 512 MiB swap, and a 24 GiB root disk. Its root filesystem was 18% used, memory availability about 3.4 GiB, and swap unused. The server and database containers had been up for four days. The server image is tagged `latest`; its advertised version is recorded separately because image tags can change.
+VM 109 and CT 110 use `vmbr0` on `192.168.0.X/24`. Moving the service guests onto the SDN is planned.
 
-The service VM has guest-agent support enabled in PVE, but the ping command reported that the QEMU guest agent is not running. A noninteractive SSH attempt from the trusted hypervisor used an existing known host key and was denied authentication. Its container inventory and installed OS version therefore remain unverified. No credentials or host-key checks were bypassed.
+The datacenter firewall is enabled. **Input defaults to DROP**, with seven enabled allow rules. **Output and forwarding default to ACCEPT**. The [firewall screenshots](../README.md#firewall-datacenter-level) show the rules and settings.
 
-## SDN and firewall evidence
+A few details to check before extending the SDN:
 
-Jadon clarified that the SDN is already configured on selected non-service VMs; extending it to service VMs is planned. The hypervisor configuration shows the experimental VMs attached to the SDN VNet, while the running service VM and GoodMem LXC use the existing service network. Configuration was verified; traffic through the stopped experimental guests was not tested.
+- One rule is labelled as internet access but has the home LAN as its destination.
+- The legacy firewall status shows pending changes, while the nftables firewall is active.
+- Global IPv4 forwarding is `0`, while forwarding on `vmbr0` and `testnet` is `1`.
 
-- A Simple zone, a separate VNet, PVE IPAM, a DHCP range, a gateway, and source NAT are configured. Zone and VNet must not be treated as the same object.
-- dnsmasq was listening for DNS and DHCP on the lab interface, and a source-NAT rule was present.
-- Global IPv4 forwarding and `conf.all.forwarding` were `0`; forwarding on both relevant bridge interfaces was `1`. This mixed configuration was recorded without declaring routing broken or working.
-- The legacy and nftables firewall services were active, and an nftables firewall table existed. Legacy `pve-firewall status` reported `enabled/running (pending changes)`; the scan did not establish why.
-- Seven enabled datacenter allow rules were listed. One rule commented as internet access actually names the home LAN as its destination. Comments alone do not describe an effective security boundary.
-- The running guests' firewall option queries returned no explicit option values. This does not prove guest firewall enforcement.
-- The host management bridge had zero reported RX/TX errors or drops at scan time.
+The lab VMs were stopped, so DHCP, internet access and isolation weren't tested from inside them.
 
-All experimental guests were stopped. There was no DHCP lease acquisition test, guest-to-internet test, or denied-traffic test across the intended boundary. The scan does not establish isolation or successful lab routing. Review policy intent and runtime state before the planned extension to service VMs; these findings do not establish an outage of the services currently in use.
+## Screenshots
 
-## Repeating the checks
-
-Use your own trusted SSH alias and verified guest IDs. The placeholders below are not this environment's connection details. Review output privately before publishing it: inventories, firewall rules, and guest configuration can expose internal information.
-
-From a workstation with OpenSSH:
-
-```text
-ssh -o BatchMode=yes -o StrictHostKeyChecking=yes YOUR_HYPERVISOR_ALIAS "pveversion; qm list; pct list; pvesm status"
-```
-
-On the verified Proxmox host, useful read-only checks include:
-
-```text
-systemctl --failed --no-legend --no-pager
-free -h
-df -hT /
-pvesh get /cluster/backup --output-format json
-pvesh get /storage --output-format json
-pvesh get /cluster/sdn/zones --output-format json
-pvesh get /cluster/sdn/vnets --output-format json
-pve-firewall status
-sysctl net.ipv4.ip_forward
-```
-
-Then inspect the selected guest's configuration and, when authorized access is available, its runtime. Include both `qm list` and `pct list`: scanning only VMs omits LXC workloads. Read SMART health/attributes from verified device paths without initiating self-tests. Check service endpoints from the workstation and distinguish HTTP response, process state, Docker health status, and tested application behavior.
-
-## Documentation changes
-
-This refresh replaces stale versions, incomplete guest inventory, outdated GPU targets, and unsupported isolation claims. Current public tables replace screenshots of an older PVE release that also revealed operational details. Original screenshots and addressing remain in earlier Git history; this update does not rewrite that history.
-
-The existing roadmap remains a set of ideas. No infrastructure remediation, new service deployment, or recovery exercise is represented as completed by this documentation update.
+The four screenshots in the README were taken from Proxmox on September 22: guest inventory, firewall rules, firewall options and SDN IPAM. IPs and MAC addresses are masked where shown, and account details are cropped out. The display edits used for the captures didn't change the Proxmox configuration.

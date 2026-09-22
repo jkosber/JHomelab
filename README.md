@@ -1,149 +1,182 @@
 # JHomelab
 
-My personal homelab, running Proxmox VE on a repurposed Alienware 15 R3. I use it for Linux administration, virtualization, software-defined networking, firewall configuration, and services in Docker.
-
-This repository documents the hardware, guest inventory, observed service state, and future ideas. **Last read-only scan: September 22, 2026.** The [dated scan report](docs/health-check-2026-09-22.md) records the checks, warnings, and limits behind this inventory. Runtime states are a snapshot, not a continuous health guarantee.
+My personal homelab, running Proxmox VE on an old Alienware 15 R3. I use it to practice the stuff I don't get to touch at work or in class — running a real hypervisor, carving up an SDN with separate subnets, writing firewall rules, and standing up Linux services in Docker. This repo is the running journal: hardware specs, network layout, VM inventory, what's deployed, what's planned next, and a changelog of what I actually did and when.
 
 ## What's in this repo
 
-This is a documentation-only repository. Reproducible configuration exports and recovery instructions are still future work. Public tables use descriptive roles rather than internal hostnames, addresses, or guest identifiers; operational connection details are maintained privately.
+Right now this is a documentation-only repo. I'll add sanitized configs (SDN exports, firewall rules, Docker compose files, Bash scripts) as separate sub-directories once they settle. The course repos that fed into this build are:
 
-Related coursework:
+- [SVAD-111-Linux-Virtualization](https://github.com/jkosber/SVAD-111-Linux-Virtualization) — Linux admin and virtualization coursework
+- [Networking-109](https://github.com/jkosber/Networking-109) — CCNA Networking I (Cisco IOS, addressing, routing)
+- [CyberOps-115](https://github.com/jkosber/CyberOps-115) — Cisco CyberOps Associate (Security Onion, Snort, packet analysis)
 
-- [SVAD-111-Linux-Virtualization](https://github.com/jkosber/SVAD-111-Linux-Virtualization) — Linux administration and virtualization
-- [Networking-109](https://github.com/jkosber/Networking-109) — networking fundamentals, addressing, and routing
-- [CyberOps-115](https://github.com/jkosber/CyberOps-115) — security monitoring and packet analysis
+Last Proxmox update: **September 22, 2026**. The [health-check notes](docs/health-check-2026-09-22.md) have the scan details. Local IPs have the last number replaced with `X`.
 
-## Current snapshot
+## What I get out of running it
 
-| Area | Observed on September 22, 2026 |
-| :--- | :--- |
-| Hypervisor | Proxmox VE manager **9.2.20**, running kernel **7.0.14-17-pve** |
-| Guests | Ten configured VMs: one running, nine stopped; one running LXC container |
-| Startup | The service VM and GoodMem LXC container both have automatic startup enabled |
-| Host services | Core PVE services active; no failed systemd units listed |
-| Web endpoints | Proxmox, Homepage, Uptime Kuma, and Portainer returned HTTP 200 |
-| GoodMem | Server container healthy; PostgreSQL/pgvector container running; API responded |
-| Storage | All three configured pools active; boot SSD warning persists |
-| Recovery | No scheduled PVE backup jobs or backups in configured local backup storage were listed; external copies and restores unverified |
+- Hypervisor admin on a real Proxmox install (currently PVE 9.2.20, kernel 7.0.14-17-pve).
+- Software-defined networking — VNets, managed IPAM/DHCP, predictable per-VM addressing.
+- Per-distribution Linux practice (Debian/Ubuntu, RHEL/Fedora, Arch, SUSE, Pop!, Mint, Zorin) without polluting my daily-driver.
+- PCI passthrough — the GTX 1070 Mobile is bound to `vfio-pci` for VM use.
+- Docker via Portainer for the always-on services on VM 109.
+- A documented, reproducible lab I can rebuild from notes if the host gets wiped.
 
-## Physical host
+## Network layout
 
-| Component | Verified specification | Role |
+- **Core router** — TP-Link AX6600 Tri-Band Wi-Fi 6. Routing, DHCP, edge firewall.
+- **Distribution** — Netgear WN2000RPTv2 range extender, SSID broadcast off, used as a wireless bridge into the lab segment. Planned upgrade: replace with a Cat6 backhaul for gigabit stability.
+- **Access** — still flat. Plan is to drop in a managed switch so I can do 802.1Q VLAN tagging between home, lab, and management.
+
+## Physical host — `jhome`
+
+| Component | Specification | Role / Pool |
 | :--- | :--- | :--- |
-| Platform | Alienware 15 R3 | Hypervisor |
-| CPU | Intel Core i7-7700HQ, 4 cores / 8 threads | Compute |
-| RAM | 16 GB DDR4, two 8 GB modules at 2400 MT/s | Shared guest and host memory |
-| GPU | NVIDIA GeForce GTX 1070 Mobile, bound to `vfio-pci` | Configured for selected desktop guests; guest use untested |
-| Boot SSD | SK hynix SC311 SATA 128 GB; about 119.2 GiB visible | Host OS and local storage |
-| Guest HDD | HGST 1 TB; about 931.5 GiB visible | Guest thin-provisioned storage |
+| Platform | Alienware 15 R3 | Hypervisor host |
+| Hypervisor | Proxmox VE 9.2.20 / kernel 7.0.14-17-pve | Bare metal |
+| Management IP | `192.168.0.X` | Web UI at `https://192.168.0.X:8006` |
+| CPU | Intel i7-7700HQ (4C / 8T) | Core compute |
+| RAM | 16 GB DDR4 | Over-provisioned across the lab guests |
+| GPU (host) | Intel HD Graphics 630 | Console / host display |
+| GPU (passthrough) | NVIDIA GTX 1070 Mobile | Bound to `vfio-pci`, configured for VMs 100, 105, 107 and 108 |
+| SSD | SK Hynix 128 GB | `local`, `local-lvm` (OS, ISOs) |
+| HDD | HGST 1 TB | `vmdata` (VM store, future NAS target) |
 
-The boot SSD's overall SMART result is **PASSED**, but it continues to report 24 offline-uncorrectable sectors, three reported-uncorrectable errors, and three end-to-end errors. Those counters match the September 10 check; recurring SMART alerts remain. See the [storage findings](docs/health-check-2026-09-22.md#storage-and-recovery) before planning disk work.
+## SDN and IPAM
 
-The host root filesystem was 69% used. PVE reported pool usage of 65.33% for local directory storage, 0.01% for the boot-disk thin pool, and 23.96% for the guest thin pool. Filesystem and PVE storage percentages use different accounting.
+I'm using Proxmox's built-in SDN for the experimental lab subnet. Anything I'm poking at — broken Linux installs, Kali scans, opnsense builds — lives on `testnet`. It's already configured for VMs 100–108. The service guests, VM 109 and CT 110, are still on `vmbr0`; moving them onto the SDN is planned.
 
-## Guest inventory
+| Network | Zone | Bridge / VNet | Subnet | IPAM | Gateway |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| Home LAN | — | `vmbr0` | `192.168.0.X/24` | Static / external DHCP | `192.168.0.X` |
+| Lab SDN | `test` | `testnet` | `10.10.100.X/24` | PVE IPAM (DHCP) | `10.10.100.X` |
 
-Names below describe intended guest roles. Stopped guests were not booted, so their installed distribution releases were not reverified. CPU and memory values come from hypervisor configuration; memory is in MiB and primary virtual-disk capacity is in GiB.
+Lab VMs have address mappings in IPAM so they're easy to track.
 
-| Guest role | Type | vCPU | RAM (MiB) | Primary disk (GiB) | State | Auto-start | GPU configured |
-| :--- | :--- | ---: | ---: | ---: | :--- | :--- | :--- |
-| Ubuntu desktop | VM | 8 | 8192 | 200 | Stopped | No | Yes |
-| Kali lab | VM | 4 | 2048 | 30 | Stopped | No | No |
-| OPNsense experiment | VM | 2 | 3072 | 16 | Stopped | No | No |
-| openSUSE desktop | VM | 2 | 4096 | 30 | Stopped | No | No |
-| Fedora desktop | VM | 4 | 4096 | 30 | Stopped | No | No |
-| Zorin OS desktop | VM | 8 | 8192 | 40 | Stopped | No | Yes |
-| Manjaro desktop | VM | 4 | 4096 | 30 | Stopped | No | No |
-| Linux Mint desktop | VM | 4 | 4096 | 30 | Stopped | No | Yes |
-| Pop!_OS desktop | VM | 4 | 8196 | 30 | Stopped | No | Yes |
-| Ubuntu service host | VM | 2 | 2048 | 32 | Running | Yes | No |
-| GoodMem service host | Unprivileged LXC | 2 | 4096 | 24 | Running | Yes | No |
+![SDN IPAM mappings](screenshots/sdn-ipam-2026-09-22.png)
 
-The VMs total about 47 GiB of configured RAM, plus 4 GiB for LXC, against 16 GB of physical memory. This is configured overcommit, not evidence that all guests can run simultaneously. Only the service VM and LXC container were running during the scan. The Pop!_OS allocation of 8196 MiB is the observed value.
+*IPAM mappings for the lab gateway and VMs 100–108. IPs and MAC addresses are masked.*
 
-Four stopped desktops reference the same physical GPU. Their configurations do not demonstrate simultaneous GPU use or successful passthrough inside a guest. The service VM has no GPU assignment, correcting the older inventory.
+### Firewall (Datacenter level)
 
-The GoodMem container runs Debian 13.1 and has 512 MiB of configured swap. The service VM's previously documented Ubuntu release was not reverified: its QEMU guest agent is unavailable, and the attempted noninteractive SSH login was denied.
+The base input policy is **DROP**: incoming traffic needs an accept rule. Output and forwarding are set to **ACCEPT**.
 
-## Services
+The seven allow rules cover lab network access, DNS and DHCP, plus management access for Ping, SSH on 22 and the web UI on 8006.
 
-| Service | Role | Evidence from this scan |
-| :--- | :--- | :--- |
-| Homepage | Dashboard | HTTP 200 from the workstation |
-| Uptime Kuma | Availability monitoring | HTTP 200 after following the redirect |
-| Portainer | Container management | HTTPS 200 from the workstation |
-| GoodMem | Memory service | Docker health check healthy; API responded and advertised `server-v1.0.285` |
-| PostgreSQL with pgvector | GoodMem data store | Docker container running, using image tag `pgvector/pgvector:pg17` |
+![Datacenter firewall rules](screenshots/datacenter-firewall-2026-09-22.png)
 
-Homepage, Uptime Kuma, and Portainer were checked at their existing endpoints. Their guest-level Docker inventory, image versions, and application workflows were not inspected because service-VM access was unavailable. HTTP responses do not establish application correctness or recovery readiness.
+*Datacenter > Firewall — seven enabled allow rules. Per-VNet and per-VM firewalls are the next layer to fill in.*
 
-GoodMem's running server uses an image tagged `latest`; that tag is mutable. The advertised API version above is the observed runtime identifier. Database restoration and end-to-end application recovery were not tested.
+![Datacenter firewall defaults](screenshots/firewall-options-2026-09-22.png)
 
-Nginx Proxy Manager and RustDesk remain previously recorded deployment ideas; this scan did not establish whether they are installed.
+*Firewall enabled, with default-drop input.*
 
-## SDN configuration and planned service rollout
+## Virtual machines
 
-The SDN is already configured on selected non-service VMs. Extending it to the service VMs is planned. The running service workloads do not currently depend on the SDN. This scope was clarified on September 22, 2026.
+The VMs have about 47 GB of RAM assigned, plus 4 GB for the GoodMem container, against 16 GB in the host. VM 109 and CT 110 are set to auto-boot. The other guests stay stopped until I'm working on a lab.
 
-The existing Proxmox configuration includes a Simple SDN zone and a distinct VNet object, with PVE IPAM, dnsmasq DHCP, and source NAT. Zone and VNet names are different objects; older documentation conflated them. A DNS/DHCP listener and the NAT rule were present during this scan.
+![Datacenter inventory in the Proxmox web UI](screenshots/guest-inventory-2026-09-22.webp)
 
-**Isolation, address assignment, and internet access from an experimental guest were not tested.** All experimental VMs were stopped, and none were started for the scan. The previously described per-guest address convention remains an intention rather than verified lease state.
+*September 22 — VM 109 and CT 110 running, with VMs 100–108 stopped.*
 
-Both firewall services were active, and an nftables firewall table was present. Seven datacenter allow rules were configured. The legacy firewall status command reported pending changes, and one rule's descriptive comment did not match its destination scope. These observations warrant review; they do not prove that the intended policy is enforced.
+### Always-on / infrastructure
 
-Global IPv4 forwarding was `0`, while forwarding on both relevant bridge interfaces was `1`. Record both values: the global setting alone is insufficient evidence of a routing outage. An intentional guest traffic test is still needed.
+| ID | Name | IP | OS | RAM | Disk | State | Role |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| VM 109 | `Ubuntu-Server` | `192.168.0.X` | Ubuntu Server | 2 GB | 32 GB | Running | Core infra / Docker host |
+| CT 110 | `goodmem-vec` | `192.168.0.X` | Debian 13.1 | 4 GB | 24 GB | Running | GoodMem / PostgreSQL |
 
-Previously recorded physical-network equipment includes a TP-Link AX6600 router and Netgear WN2000RPTv2 wireless bridge. Router configuration, cabling, wireless behavior, and switch capabilities were outside this host scan and were not reverified.
+### Cyber range / distro lab (`testnet`)
 
-## Maintenance and follow-ups
+All nine lab VMs were stopped at the time of the update.
 
-- Review the persistent boot SSD alerts and verify recoverable backups before disk maintenance.
-- Establish backup coverage and test restoration. One experimental guest's primary disk explicitly has `backup=0`.
-- Restore service-VM observability by checking guest-agent installation/service state and approved SSH access.
-- Before extending the SDN to service VMs, review firewall rule intent and runtime state, then test allowed and denied traffic, DHCP, and egress from an intentionally started lab guest.
-- Verify GPU use inside a selected guest before claiming working hardware acceleration.
+| VMID | Name | IP | OS | RAM | Disk |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| 100 | `Ubuntu-Desktop` | `10.10.100.X` | Ubuntu Desktop | 8 GB | 200 GB |
+| 101 | `Kali` | `10.10.100.X` | Kali Linux | 2 GB | 30 GB |
+| 102 | `opnsense` | `10.10.100.X` | FreeBSD / OPNsense | 3 GB | 16 GB |
+| 103 | `OpenSUSE-Desktop` | `10.10.100.X` | openSUSE | 4 GB | 30 GB |
+| 104 | `Fedora-Desktop` | `10.10.100.X` | Fedora | 4 GB | 30 GB |
+| 105 | `ZorinOS` | `10.10.100.X` | Zorin OS | 8 GB | 40 GB |
+| 106 | `Manjaro-Desktop` | `10.10.100.X` | Manjaro (Arch) | 4 GB | 30 GB |
+| 107 | `Linux-Mint` | `10.10.100.X` | Linux Mint | 4 GB | 30 GB |
+| 108 | `PopOS` | `10.10.100.X` | Pop!_OS | 8 GB | 30 GB |
 
-The running kernel command line includes `intel_iommu=on`, `iommu=pt`, and `pcie_acs_override=downstream`. The earlier claim that `multifunction` was also enabled is not supported by this scan. The NVIDIA device is bound to `vfio-pci`; no passthrough or boot settings were changed.
+VM 100 also serves as the Tailscale node. The single-NIC OPNsense gateway on VM 102 is still a work in progress.
+
+## Services on VM 109
+
+Docker stack, managed through Portainer.
+
+| Service | Port | State | What it does |
+| :--- | :--- | :--- | :--- |
+| Homepage | 3000 | Running | Central dashboard |
+| Uptime Kuma | 3001 | Running | Service health monitoring |
+| Portainer | 9443 | Running | Container management UI |
+| Nginx Proxy Manager | 81 | Planned | Reverse proxy + Let's Encrypt |
+| RustDesk Server | 21115+ | Planned | Self-hosted remote support |
+
+Homepage, Uptime Kuma and Portainer all responded during the check.
+
+## Services on CT 110
+
+GoodMem runs in a separate Debian LXC container.
+
+| Service | Port | State | What it does |
+| :--- | :--- | :--- | :--- |
+| GoodMem | 8080 (REST), 9090 (gRPC) | Healthy | Memory service |
+| PostgreSQL / pgvector | 5432 | Running | GoodMem database and vector storage |
 
 ## Roadmap
 
-These are existing ideas, not newly selected work or verified deployments:
+**Infrastructure**
 
-- Replace the wireless bridge backhaul with Cat6.
-- Extend the existing non-service VM SDN configuration to service VMs after validation.
-- Add managed switching and VLAN practice.
-- Evaluate Nginx Proxy Manager, internal DNS, and RustDesk.
-- Explore a dedicated NAS guest for SMB/NFS.
-- Revisit the placement of the Tailscale subnet router after verifying its current deployment.
-- Explore Wazuh or Security Onion and more detailed firewall segmentation.
-- Explore Jellyfin with GPU transcoding after validating passthrough.
-- Add sanitized SDN/firewall exports, Compose files, maintenance scripts, and tested recovery instructions.
+- Cat6 backhaul to replace the wireless bridge.
+- Managed switch + 802.1Q VLAN tagging.
+- Extend the SDN to the service guests.
+- Nginx Proxy Manager so I can use clean internal hostnames (`proxmox.home`, `dash.home`, etc.).
+- Internal DNS — leaning AdGuard Home over Pi-hole.
+- A dedicated NAS VM on the 1 TB HDD for SMB / NFS.
+
+**Security / cyber lab**
+
+- Move the Tailscale subnet router off VM 100 onto VM 109 so it's always reachable.
+- Per-zone firewall rules in PVE for strict segmentation between home, lab, and management.
+- Wazuh or Security Onion for SIEM / IDS on inter-zone traffic.
+- Jellyfin with the GTX 1070 doing hardware-accelerated transcoding.
+
+## Maintenance notes
+
+- GRUB has `pcie_acs_override=downstream` for PCI passthrough.
+- IOMMU verified — NVIDIA GP104BM (GTX 1070 Mobile) is bound to `vfio-pci`.
+- SDN config lives in `/etc/pve/sdn/` on the host.
+- The boot SSD still has SMART warnings. Backup coverage and a restore test need a follow-up; details are in the [health-check notes](docs/health-check-2026-09-22.md#storage-and-backups).
 
 ## Changelog
 
-### September 22, 2026 — read-only inventory and documentation refresh
+### September 2026 — Proxmox update
 
-- Updated PVE/kernel versions, hardware, guest resources, startup flags, and GPU assignments from the live host.
-- Added the running GoodMem LXC service and its observed container state.
-- Recorded persistent SSD warnings, backup inventory gaps, and service-VM access limits.
-- Replaced untested isolation and deployment claims with dated evidence and explicit limits.
-- Clarified that SDN is already configured on non-service VMs; extending it to service VMs is planned.
-- Replaced historical screenshots with current tables and removed internal connection details from this revision. Older Git history still contains the original material; history was not rewritten.
-- Made no infrastructure changes. See the [full scan report](docs/health-check-2026-09-22.md).
+- Updated PVE and kernel versions, VM resources and GPU assignments.
+- Added CT 110 and its running GoodMem / PostgreSQL services.
+- Refreshed the inventory, firewall and IPAM screenshots.
+- Documented the firewall defaults and planned SDN rollout to the service guests.
+- Kept the IP schemes in the notes, with the last number masked.
 
-### April 2026 — service tier (historical record)
+### April 2026 — service tier
 
-- Recorded the service VM as the only auto-start VM; the current inventory also includes an auto-start LXC container.
-- Listed Nginx Proxy Manager and RustDesk as deployment ideas.
+- Confirmed VM 109 as the only auto-boot VM. The over-committed RAM pool only matters when I'm running a scenario.
+- Lined up Nginx Proxy Manager + RustDesk Server as the next services to deploy.
 
-### February 2026 — infrastructure pass (historical record)
+### February 2026 — infrastructure pass
 
-- Documented PVE 9.1-era software, the desktop guest inventory, GPU configuration, and SDN addressing intentions.
-- Expanded the roadmap with monitoring, reverse proxying, switching, and DNS.
+- Audited the host. Kernel 6.17 + PVE 9.1 stable.
+- Documented the GTX 1070 passthrough state and the full distro-lab inventory (100–109).
+- Locked in the SDN `testnet` config and IPAM mappings.
+- Expanded the roadmap with SIEM (Wazuh), NPM, managed switching, and internal DNS.
 
-### January 2026 — foundation (historical record)
+### January 2026 — foundation
 
-- Recorded the router setup, Proxmox installation, initial Ubuntu/Kali guests, and initial connectivity checks.
-
-Historical entries retain the earlier project's record; they are not fresh validation of those outcomes.
+- Set up the TP-Link AX6600 as the core router.
+- Split the wireless into two SSIDs (`SSID_ExistingNetwork` and `SSID_HomelabNetwork`).
+- Installed Proxmox VE on the Alienware host.
+- Brought up the first VMs — Ubuntu Server, Ubuntu Desktop, Kali.
+- Verified static and dynamic addressing, gateway routing, and CLI connectivity.
