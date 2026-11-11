@@ -4,13 +4,28 @@ My homelab runs Proxmox VE on an old Alienware 15 R3 laptop. It's where I practi
 
 ## What's in this repo
 
-Mostly documentation for now. This README is the current state of the lab. `docs/` has write-ups from bigger maintenance sessions, and `screenshots/` has captures from the Proxmox web UI and my dashboard. Sanitized configs (SDN exports, firewall rules, compose files, scripts) will go in their own folders once they stop changing every week.
+Mostly documentation for now. This README is the current state of the lab. From November 2026 on, each project gets its own folder.
+
+| Folder | What's in it |
+| :--- | :--- |
+| `projects/` | One folder per project, named by month, with a write-up of what I did, what I measured and what I didn't check |
+| `docs/` | Reference pages that describe the lab as it is now. [`docs/topology.md`](docs/topology.md) has the network diagram |
+| `notes/` | Point-in-time checks that aren't projects, like the September health check |
+| `screenshots/` | Captures from the Proxmox web UI and my dashboard |
+
+Sanitized configs (SDN exports, firewall rules, compose files, scripts) will go in their own folders once they stop changing every week.
 
 Local IPs keep the first three octets and swap the last one for `X`.
 
-Last updated **October 23, 2026**.
+Last updated **November 11, 2026**.
 
-- [October 2026 maintenance](projects/2026-10-patching-and-monitoring/README.md): patching after a CA compromise, setting up monitoring and alerts, and rebuilding the dashboard.
+| Project | Date | Result | Write-up |
+| :--- | :--- | :--- | :--- |
+| DIR-885L wireless bridge | November 10–11, 2026 | Replaced the Wi-Fi extender between the lab and the home router with an OpenWrt bridge. Lab-to-home throughput went from about 47 to 239–369 Mbit/s. The 24-hour soak test is still running | [projects/2026-11-dir885l-wireless-bridge](projects/2026-11-dir885l-wireless-bridge/README.md) |
+| Patching and monitoring | October 21–23, 2026 | Patched every host after a CA compromise, set up Beszel and Uptime Kuma with Discord alerts, and rebuilt the dashboard | [projects/2026-10-patching-and-monitoring](projects/2026-10-patching-and-monitoring/README.md) |
+
+TODO(soak): update the bridge row's result once the 24-hour soak has an outcome.
+
 - [September 22 health check](notes/health-check-2026-09-22.md): a read-only look at the host and guests that I use as a baseline.
 
 The coursework that fed into this build:
@@ -32,9 +47,13 @@ The coursework that fed into this build:
 
 ## Network layout
 
-- **Core router:** TP-Link AX6600 Tri-Band Wi-Fi 6. Routing, DHCP and the edge firewall.
-- **Distribution:** a Netgear WN2000RPTv2 range extender with its SSID hidden, working as a wireless bridge into the lab. A Cat6 run will replace it for gigabit.
-- **Access:** still flat. A managed switch is on the list so I can tag 802.1Q VLANs for home, lab and management.
+- **Core router:** TP-Link Archer AX90, a tri-band Wi-Fi 6 router in the AX6600 class. Routing, DHCP and the edge firewall. One SSID covers all three bands.
+- **Distribution:** a D-Link DIR-885L running OpenWrt, working as a Wi-Fi client bridge (`relayd`) into the lab over the router's 5 GHz radio. It replaced a Netgear WN2000RPTv2 range extender on November 11, 2026; the extender stays powered and unplugged as the rollback. A Cat6 run will replace the wireless hop for gigabit.
+- **Access:** still flat. The lab switch and the Proxmox host plug straight into the bridge's LAN ports. A managed switch is on the list so I can tag 802.1Q VLANs for home, lab and management.
+
+The [topology page](docs/topology.md) has the diagram, the addressing and what the bridge does and doesn't pass. The [project write-up](projects/2026-11-dir885l-wireless-bridge/README.md) covers how I set it up.
+
+TODO(soak): whether the Netgear extender is retired or stays as the rollback.
 
 ## Physical host: `jhome`
 
@@ -141,7 +160,7 @@ GoodMem runs in its own Debian LXC.
 
 ## Monitoring and alerting
 
-Until October the only monitoring I had was an Uptime Kuma install I'd never set up. Now two tools split the job. Beszel has an agent on the host, VM 109 and CT 110 and tracks how the machines themselves are doing. Uptime Kuma checks the services from the outside every minute. Both post to a private Discord channel.
+Until October the only monitoring I had was an Uptime Kuma install I'd never set up. Now two tools split the job. Beszel has an agent on the host, VM 109 and CT 110 and tracks how the machines themselves are doing. Uptime Kuma checks the services from the outside every minute with nine monitors. Two of them watch the wireless bridge that links the lab to the home router: one pings the router through the bridge, and one checks the bridge's SSH port. Both tools post to a private Discord channel.
 
 | Alert | From | Fires when |
 | :--- | :--- | :--- |
@@ -152,6 +171,7 @@ Until October the only monitoring I had was an Uptime Kuma install I'd never set
 | Heat | Beszel | The laptop runs above 85 °C for 5 minutes |
 | Service down | Uptime Kuma | Two failed checks in a row on Proxmox, GoodMem, Portainer, Beszel, RustDesk or my portfolio site |
 | Certificate | Uptime Kuma | My portfolio site's TLS certificate is close to expiring |
+| Lab uplink | Uptime Kuma | The home router stops answering pings sent through the bridge, or the bridge's SSH port stops answering |
 
 Beszel also lists pending package updates for each machine and marks the security ones. The first time it ran it showed 87 updates waiting on CT 110. That container had only been getting targeted fixes, and I hadn't noticed.
 
@@ -185,6 +205,12 @@ Beszel also lists pending package updates for each machine and marks the securit
 - The boot SSD's SMART counters haven't moved since September (24 offline-uncorrectable sectors), and there are still no scheduled backups. Fixing that is next; the [plan](projects/2026-10-patching-and-monitoring/README.md#storage-finding) is in the October notes.
 
 ## Changelog
+
+### November 2026: a faster link to the house
+
+- **Nov 10–11:** Replaced the Netgear range extender between the lab and the home router with a spare D-Link DIR-885L running OpenWrt 25.12.6 as a `relayd` Wi-Fi client bridge. The 5 GHz radio firmware OpenWrt ships for it passed no data in client mode, so I swapped in an older build after testing two. Bench-tested it on an isolated cable, then moved the lab switch's uplink over at 01:20 on the 11th (27 seconds offline). Lab-to-home throughput went from about 47 to 239–369 Mbit/s with every address unchanged. Added a DHCP reservation for the Proxmox host and two Uptime Kuma monitors for the bridge. The soak test turned up three short drops caused by the router's band steering. [Write-up](projects/2026-11-dir885l-wireless-bridge/README.md).
+
+TODO(soak): soak outcome and the band-steering fix (or the decision to accept the drops) for this entry.
 
 ### October 2026: patching, monitoring and a dashboard that works
 
