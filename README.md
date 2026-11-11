@@ -10,8 +10,8 @@ Local IPs keep the first three octets and swap the last one for `X`.
 
 Last updated **October 23, 2026**.
 
-- [October 2026 maintenance](docs/maintenance-2026-10-23.md): patching after a CA compromise, setting up monitoring and alerts, and rebuilding the dashboard.
-- [September 22 health check](docs/health-check-2026-09-22.md): a read-only look at the host and guests that I use as a baseline.
+- [October 2026 maintenance](projects/2026-10-patching-and-monitoring/README.md): patching after a CA compromise, setting up monitoring and alerts, and rebuilding the dashboard.
+- [September 22 health check](notes/health-check-2026-09-22.md): a read-only look at the host and guests that I use as a baseline.
 
 The coursework that fed into this build:
 
@@ -78,7 +78,7 @@ Input defaults to **DROP**, so anything coming in needs an accept rule. Output a
 
 *Firewall on, input dropping by default.*
 
-The [September health check](docs/health-check-2026-09-22.md#sdn-and-firewall) lists three things I want to sort out before the SDN grows: a mislabeled rule, pending changes in the legacy firewall view, and a forwarding setting that doesn't match the bridges.
+The [September health check](notes/health-check-2026-09-22.md#sdn-and-firewall) lists three things I want to sort out before the SDN grows: a mislabeled rule, pending changes in the legacy firewall view, and a forwarding setting that doesn't match the bridges.
 
 ## Virtual machines
 
@@ -182,7 +182,7 @@ Beszel also lists pending package updates for each machine and marks the securit
 - SDN config lives in `/etc/pve/sdn/` on the host.
 - APT only uses the trixie sources. I cleaned out some Proxmox 8 (bookworm) leftovers in October.
 - VM 109 runs `qemu-guest-agent`, so snapshots and backups freeze its filesystem first.
-- The boot SSD's SMART counters haven't moved since September (24 offline-uncorrectable sectors), and there are still no scheduled backups. Fixing that is next; the [plan](docs/maintenance-2026-10-23.md#storage-finding) is in the October notes.
+- The boot SSD's SMART counters haven't moved since September (24 offline-uncorrectable sectors), and there are still no scheduled backups. Fixing that is next; the [plan](projects/2026-10-patching-and-monitoring/README.md#storage-finding) is in the October notes.
 
 ## Changelog
 
@@ -190,7 +190,7 @@ Beszel also lists pending package updates for each machine and marks the securit
 
 - **Oct 3–5:** Built CT 111 as a Caddy reverse-proxy pilot with internal HTTPS, using Homepage as its first backend. Took inventory of the VM 109 Docker stack and upgraded it: Uptime Kuma went from v1 to v2, Homepage and Portainer got updated, and the RustDesk server is running. Watchtower had stopped working against Docker's newer minimum API, so I fixed that too.
 - **Oct 21:** The eMudhra (emSign) certificate authority had a key compromise. I removed trust for its root on the host and guests, then updated GoodMem, PostgreSQL and Docker on CT 110 and Portainer on VM 109, with snapshots first. I also wrote a small read-only script that tells me which hosts are patched and which are still waiting on a vendor.
-- **Oct 23:** Installed every pending update on the host, VM 109 and CT 110 (88 packages on CT 110 alone, 33 of them security fixes). Cleaned up old APT sources and an extra kernel. Swapped the archived Watchtower for its maintained fork. Put the guest agent on VM 109 and grew its root volume to use the whole 32 GB disk. Set up Beszel and Uptime Kuma with Discord alerts, and brought Homepage back with live panels this time. Also found an NVMe drive the BIOS had been hiding and planned the storage and backup move around it. [Notes](docs/maintenance-2026-10-23.md).
+- **Oct 23:** Installed every pending update on the host, VM 109 and CT 110 (88 packages on CT 110 alone, 33 of them security fixes). Cleaned up old APT sources and an extra kernel. Swapped the archived Watchtower for its maintained fork. Put the guest agent on VM 109 and grew its root volume to use the whole 32 GB disk. Set up Beszel and Uptime Kuma with Discord alerts, and brought Homepage back with live panels this time. Also found an NVMe drive the BIOS had been hiding and planned the storage and backup move around it. [Notes](projects/2026-10-patching-and-monitoring/README.md).
 
 ### September 2026: Proxmox update
 

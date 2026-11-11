@@ -1,6 +1,6 @@
 # Homelab health check: September 22, 2026
 
-A read-only look at the Proxmox host, the guest inventory and the running services. I didn't restart or reconfigure anything, and the stopped lab VMs stayed stopped. This is the baseline the [October maintenance](maintenance-2026-10-23.md) builds on.
+A read-only look at the Proxmox host, the guest inventory and the running services. I didn't restart or reconfigure anything, and the stopped lab VMs stayed stopped. This is the baseline the [October maintenance](../projects/2026-10-patching-and-monitoring/README.md) builds on.
 
 The [README](../README.md) has the network layout, the current inventory and the Proxmox screenshots. Local IPs keep the first three octets and swap the last one for `X`.
 

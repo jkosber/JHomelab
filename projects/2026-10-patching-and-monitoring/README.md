@@ -2,7 +2,7 @@
 
 Most of October went to patching and to finally being able to see what the lab is doing. A certificate authority compromise on the 21st kicked it off. By the 23rd I had every host caught up, swapped out an abandoned container updater, and set up monitoring with Discord alerts and a dashboard that shows live data instead of a page of links.
 
-Local IPs keep the first three octets and swap the last one for `X`. The [README](../README.md) has the current inventory, and the [September 22 health check](health-check-2026-09-22.md) is the baseline I compared against.
+Local IPs keep the first three octets and swap the last one for `X`. The [README](../../README.md) has the current inventory, and the [September 22 health check](../../notes/health-check-2026-09-22.md) is the baseline I compared against.
 
 ## October 21: the CA compromise
 
@@ -58,7 +58,7 @@ Homepage was already on VM 109, but I'd never configured it, so it was just a pa
 
 Homarr came close, but it can't show Portainer.
 
-![Homepage dashboard](../screenshots/homepage-dashboard-2026-10-23.png)
+![Homepage dashboard](../../screenshots/homepage-dashboard-2026-10-23.png)
 
 *Live Proxmox, Portainer, Beszel and Uptime Kuma data on one page.*
 
