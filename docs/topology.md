@@ -13,7 +13,7 @@ flowchart TB
     homelan["Home LAN clients<br/>wired and Wi-Fi"]
     bridge["D-Link DIR-885L, OpenWrt 25.12.6<br/>Wi-Fi client + relayd<br/>192.168.0.X"]
     extender["Netgear WN2000RPTv2 extender<br/>powered, uncabled: rollback"]
-    switch["Netgear 24-port switch"]
+    labswitch["Netgear 24-port switch"]
 
     subgraph jhome["jhome: Proxmox VE"]
         vmbr0["vmbr0<br/>192.168.0.X/24"]
@@ -25,7 +25,7 @@ flowchart TB
     upstream --- router
     router --- homelan
     router -.-|"5 GHz, channel 44, WPA2"| bridge
-    bridge ---|"LAN port 1"| switch
+    bridge ---|"LAN port 1"| labswitch
     bridge ---|"LAN port 2"| vmbr0
     vmbr0 --- svc
     vmbr0 ---|"routed by jhome"| testnet

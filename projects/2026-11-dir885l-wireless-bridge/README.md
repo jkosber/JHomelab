@@ -189,6 +189,7 @@ Options I have, none of them tested yet:
 Turning off 802.11v handling in wpa_supplicant (`disable_btm`) wouldn't help, because the firmware moves by itself.
 
 TODO(soak): which option Jadon chose (roamoff on the bridge, Smart Connect off on the AX90, or accept the drops), and whether it was tested.
+
 TODO(soak): drop count and timestamps for the rest of the soak, after 17:35 EST on November 11.
 
 ## Rollback
@@ -213,6 +214,7 @@ TODO(jadon): confirm or rewrite these lessons
 ## Next steps
 
 TODO(soak): fresh config backup after the soak.
+
 TODO(soak): fixed LAN MAC on the bridge, if Jadon decides to set one.
 
 The Cat6 run to the lab is still the long-term plan. It would remove the Wi-Fi hop, which the direct-cable test during the cutover showed is the limit.
