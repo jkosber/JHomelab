@@ -173,7 +173,7 @@ Each one ran the same way:
 
 1. The AX90 sent the bridge an 802.11v steering request pointing it at its other 5 GHz radio.
 2. The bridge's radio tried to move there.
-3. The key handshake on the other radio failed four times, and the AX90 dropped the bridge.
+3. The key handshake on the other radio failed four times, and the link dropped with reason code 2. The log can't show which side ended it.
 4. About a second later the bridge was back on the channel-44 radio.
 
 A read-only research pass through the wpa_supplicant and `brcmfmac` source, plus checks on the bridge, found the likely cause. Firmware roaming is on in the radio. The BSSID lock I set lives only in wpa_supplicant, so it doesn't stop the firmware from roaming on its own. What the lock does do is make wpa_supplicant refuse the key handshake on the other radio, which is why the link drops instead of moving. That the firmware acts on the steering request is an inference from the timing and from a missing "Trying to associate" line in the log. I didn't read it from the firmware.

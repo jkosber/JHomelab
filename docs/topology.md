@@ -50,11 +50,11 @@ The extender and the DIR-885L must never both be cabled to the lab. Each one ans
 
 The AX90 broadcasts one main SSID on all three of its bands with Smart Connect on, which lets the router steer clients between bands. There is no separate homelab SSID. The 5 GHz channels are set to automatic.
 
-| Radio | Channel today | Used by the lab |
+| Radio | Channel on November 10 | Used by the lab |
 | :--- | :--- | :--- |
 | 2.4 GHz | 7 | No. The DIR-885L's 2.4 GHz radio is off, but I tested it on the bench as a fallback |
 | 5 GHz-1 | 44, 80 MHz | Yes. The DIR-885L is locked to this radio |
-| 5 GHz-2 | 157, 80 MHz | No. The DIR-885L's 5 GHz radio can't see channels 149 and up |
+| 5 GHz-2 | 157, 80 MHz | No. It never showed up in the DIR-885L's scans, which find nothing on channels 149 and up |
 
 Because of that lock, a channel change on the router's 5 GHz-1 radio or a new router means editing the bridge's config.
 
