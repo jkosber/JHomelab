@@ -36,7 +36,7 @@ The coursework that fed into this build:
 
 ## What I get out of running it
 
-- Time on a real Proxmox install (PVE 9.2.21, kernel 7.0.14-25-pve) instead of reading about one.
+- Time on a real Proxmox install (PVE 9.2.26, kernel 7.0.14-28-pve) instead of reading about one.
 - SDN with its own VNet, IPAM and DHCP, plus addresses I can predict from the VMID.
 - A pile of Linux families to break (Debian/Ubuntu, Fedora, Arch, SUSE, Pop!_OS, Mint, Zorin) without touching my daily machine.
 - PCI passthrough. The GTX 1070 Mobile is bound to `vfio-pci` so VMs can use it.
@@ -60,7 +60,7 @@ TODO(soak): whether the Netgear extender is retired or stays as the rollback.
 | Component | Specification | Role / Pool |
 | :--- | :--- | :--- |
 | Platform | Alienware 15 R3 | Hypervisor host |
-| Hypervisor | Proxmox VE 9.2.21 / kernel 7.0.14-25-pve | Bare metal |
+| Hypervisor | Proxmox VE 9.2.26 / kernel 7.0.14-28-pve | Bare metal |
 | Management IP | `192.168.0.X` | Web UI on port 8006 |
 | CPU | Intel i7-7700HQ (4C / 8T) | Core compute |
 | RAM | 16 GB DDR4 | Over-provisioned across the lab guests |
@@ -138,7 +138,7 @@ Docker Engine 29.1.3, set up as a Portainer stack. Watchtower pulls new images f
 | Service | Port | State | What it does |
 | :--- | :--- | :--- | :--- |
 | Homepage 2.7.0 | 3000 | Running | My dashboard, with live Proxmox, Portainer, Beszel and Uptime Kuma panels |
-| Uptime Kuma 2.5.7 | 3001 | Running | Service checks, a status page on the LAN, Discord alerts |
+| Uptime Kuma 2.5.9 | 3001 | Running | Service checks, a status page on the LAN, Discord alerts |
 | Beszel 0.21.1 | 8090 | Running | Host and container health, drive SMART, pending updates, Discord alerts |
 | Portainer 2.45.3 | 9443 | Running | Container management |
 | RustDesk Server 1.1.16 | 21115–21119 | Running | Self-hosted remote support |
@@ -155,7 +155,7 @@ GoodMem runs in its own Debian LXC.
 
 | Service | Port | State | What it does |
 | :--- | :--- | :--- | :--- |
-| GoodMem server v1.0.331 | 8080 (REST), 9090 (gRPC) | Healthy | Memory service |
+| GoodMem server v1.0.337 | 8080 (REST), 9090 (gRPC) | Healthy | Memory service |
 | PostgreSQL 17.11 / pgvector | 5432 | Running | GoodMem's database and vector storage |
 
 ## Monitoring and alerting
