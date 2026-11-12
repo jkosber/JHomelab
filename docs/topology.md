@@ -71,9 +71,7 @@ The home LAN has no global IPv6, only link-local addresses.
 - It relays IPv4 only. IPv6 link-local traffic no longer crosses between the lab and the home LAN.
 - Multicast such as mDNS isn't relayed.
 - DHCP does cross it. VM 109 took a new lease from the home router through the bridge ten minutes after the cutover.
-- The bridge's own `br-lan` interface gets a new random MAC on every boot, so lab hosts see their neighbour change after each bridge reboot.
-
-I'll give `br-lan` a fixed MAC at the bridge's next reboot. Until then the random MAC stays.
+- The bridge's own `br-lan` interface used to get a new random MAC on every boot. Since November 12 it has a fixed one, so lab hosts see the same neighbour after a bridge reboot.
 
 ## Monitoring of the path
 
