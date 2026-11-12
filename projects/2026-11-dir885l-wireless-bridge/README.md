@@ -2,9 +2,7 @@
 
 On November 11, 2026 I replaced the Wi-Fi link between my lab and the home router. A Netgear WN2000RPTv2 range extender had been doing that job over 2.4 GHz. Now a spare D-Link DIR-885L running OpenWrt 25.12.6 does it over 5 GHz, as a `relayd` client bridge. Lab traffic to the rest of the house went from about 47 Mbit/s to between 239 and 369 Mbit/s, and every host kept its address.
 
-The cutover was at 01:20 EST. A 24-hour soak test runs until about 01:20 on November 12, so this write-up covers the build, the bench tests, the cutover and the first part of the soak.
-
-TODO(soak): soak result (pass or fail, Uptime Kuma history over the full 24 hours, final count of Wi-Fi drops).
+The cutover was at 01:20 EST. I planned a 24-hour soak test and ended it at the 19-hour mark, 20:20, because the results were stable. It passed: all nine Uptime Kuma monitors stayed at 100% with no down beats, and the bridge didn't reboot. The Wi-Fi link dropped three times, for 5 to 7 seconds each, when the router tried to steer the bridge to its other 5 GHz radio. The soak didn't cover 20:20 to 01:20, the evening hours when the house uses Wi-Fi most.
 
 Local IPs keep the first three octets and swap the last one for `X`. The [topology page](../../docs/topology.md) shows how everything connects now.
 
@@ -91,7 +89,7 @@ All three files stay on the router under versioned names, and they're on the upg
 | SSH | Keys only, on every address |
 | CA store | OpenWrt 25.12.6 still ships the emSign ECC Root CA - G3, the root I removed from my other hosts in October. I removed it from the bridge's bundle on November 11. A reflash or a `ca-bundle` update brings it back |
 
-The Wi-Fi name and key, the passwords and the config backup stay off this repo.
+The Wi-Fi name and key, the passwords and the config backups stay off this repo.
 
 ## Bench tests
 
@@ -123,7 +121,7 @@ The cutover itself was one cable: the lab switch's uplink came out of the extend
 - Proxmox, Homepage, Uptime Kuma, Beszel, Portainer and GoodMem all answered. Uptime Kuma recorded no downtime across the move.
 - I added a DHCP reservation on the AX90 for jhome. Its address was inside the DHCP pool with no reservation, which was a risk that predated this project.
 
-A few minutes later I moved jhome's own cable from the switch straight into LAN port 2 (8 seconds offline) to see whether the switch was costing anything. It wasn't. The Wi-Fi hop is the limit either way, and jhome has stayed on port 2.
+A few minutes later I moved jhome's own cable from the switch straight into LAN port 2 (8 seconds offline) to see whether the switch was costing anything. It wasn't. The Wi-Fi hop is the limit either way. jhome stayed on port 2 until I simplified the cabling during the soak (see [Soak result](#soak-result)).
 
 ## Results
 
@@ -139,6 +137,28 @@ The same commands I ran against the extender before the change, rerun after the 
 
 Average latency is about the same, and the worst-case ping dropped from 31 ms to under 7 ms. On the like-for-like 40 MB runs, throughput rose five to six times from the lab to the house and about three times the other way.
 
+## Soak result
+
+The soak started at the cutover, 01:20:32 on November 11. I planned 24 hours and ended it at 20:20:32, the 19-hour mark, because the results were stable. It passed. The state at the finish:
+
+| Check at 20:20 | Result |
+| :--- | :--- |
+| Uptime Kuma | 100% over 24 hours on all nine monitors, no down beats |
+| Bridge uptime | 19 h 11 min, no reboot since the cutover |
+| Uplink | Still on the AX90's channel-44 radio, -56 dBm, 1083 Mbit/s, 0 failed transmits |
+| Bridge to home router | 10 of 10 pings, avg 1.908 ms |
+| `relayd` | Running |
+| Radio firmware | 10.10.69.69042, still loaded |
+| OpenWrt | 25.12.6 |
+| "deauth" lines in the bridge's log | 0 |
+| Wi-Fi drops | 3, all from band steering, none after 16:56. See [Band steering during the soak](#band-steering-during-the-soak) |
+
+The hours I cut, 20:20 to 01:20, are the household's evening, when the house uses Wi-Fi most. The bridge keeps logging, and I plan to count the evening's drops at about 01:27 on November 12.
+
+I changed the cabling during the soak. At 19:22:49 I unplugged the 24-port switch from the bridge. The lab has too few wired devices to need it, and nothing was behind it. It's unplugged, not gone. At 19:30:52 I moved jhome's cable from LAN port 2 to LAN port 1, 3 seconds offline. All four LAN ports sit in one bridge interface, so no configuration changed. Afterwards port 1 linked at 1000 Mb/s full duplex, the three lab hosts and six services answered, and Uptime Kuma recorded no downtime. LAN ports 2 to 4 are empty now.
+
+Right after the soak, at 20:20, I took a fresh config backup with a package list. The list has 147 packages, the same count as the one from before the cutover. I haven't tried restoring from it. I also removed the bench network namespace and NetworkManager drop-in from the PC I used for flashing.
+
 ## Monitoring
 
 I added two Uptime Kuma monitors, which brings it to nine. Both alert to Discord and sit on the status page.
@@ -153,13 +173,15 @@ Checked:
 - Every bench test and cutover step above.
 - DHCP with a real lab guest: VM 109 took a new lease from the AX90 through the bridge at 01:30:10, ten minutes after the cutover. I won't see a renewal, because the AX90 gives reserved hosts an infinite lease.
 - At 16:00 on November 11, 14 hours and 40 minutes in: no bridge reboot, link on channel 44 at -57 dBm, `relayd` running, 0% loss at 2.3 ms from jhome to the router, 100% 24-hour uptime on all nine Kuma monitors, and the replacement radio firmware still loaded.
-- The config backup's key files match the live router by hash.
+- The finish of the soak at 20:20, 19 hours in (see [Soak result](#soak-result)).
+- jhome, the other lab hosts and the services after I moved jhome to LAN port 1.
+- The first config backup's key files match the live router by hash.
 
 Not checked:
 
-- The full 24-hour soak.
+- The last 5 hours of the planned 24-hour soak, 20:20 to 01:20, which cover the household's evening.
 - The 2021 radio firmware against Asus's own download (my decision; see above).
-- An actual restore from the config backup, failsafe mode, and bootloader recovery. None has been needed.
+- An actual restore from either config backup, failsafe mode, and bootloader recovery. None has been needed.
 - The router's own log from 03:12 to 05:30 on November 11. It had already rolled out of the log buffer by the time I looked.
 - Which channel the router's other 5 GHz radio is on now. I ran no scans during the soak.
 
@@ -167,7 +189,7 @@ One more thing from validation: VM 109 stopped answering about three minutes aft
 
 ## Band steering during the soak
 
-The soak turned up three short Wi-Fi drops on November 11, at 13:27:43, 16:04:41 and 16:56:08 EST, lasting about 5, 5 and 7 seconds. The kernel log covers the bridge's whole uptime and has exactly these three, so none happened between boot at about 01:09 and 13:27. Uptime Kuma didn't register the 13:27 drop.
+The soak turned up three short Wi-Fi drops on November 11, at 13:27:43, 16:04:41 and 16:56:08 EST, lasting about 5, 5 and 7 seconds. There were none from 16:56 to the end of the soak at 20:20. That count covers the whole soak: the bridge's normal log only holds about 9 hours, but its kernel log reaches back to boot at about 01:09 and has exactly three of the driver's `Unknown Frame: category 0xa, action 0x8` lines, one per drop. Uptime Kuma registered none of them.
 
 Each one ran the same way:
 
@@ -178,27 +200,30 @@ Each one ran the same way:
 
 A read-only research pass through the wpa_supplicant and `brcmfmac` source, plus checks on the bridge, found the likely cause. Firmware roaming is on in the radio. The BSSID lock I set lives only in wpa_supplicant, so it doesn't stop the firmware from roaming on its own. What the lock does do is make wpa_supplicant refuse the key handshake on the other radio, which is why the link drops instead of moving. That the firmware acts on the steering request is an inference from the timing and from a missing "Trying to associate" line in the log. I didn't read it from the firmware.
 
+A second pass through the source added one detail: the firmware does associate to the other radio and receives handshake frames there, even though no scan from the bridge has ever listed that radio.
+
 My soak check also missed these. It counted log lines containing "deauth", and none of these lines contain that word, so it still read 0 while the check's real intent, no disconnects, wasn't met.
 
 Options I have, none of them tested yet:
 
-- Turn firmware roaming off on the bridge (`options brcmfmac roamoff=1`, a reboot, and the file on the upgrade keep-list). The research pass recommends trying this first.
-- Turn Smart Connect off on the AX90. That changes band selection for every device in the house.
 - Leave it and accept drops of a few seconds.
+- Turn firmware roaming off on the bridge (`options brcmfmac roamoff=1`, a reboot, and the file on the upgrade keep-list). The first research pass recommended trying this first. I haven't confirmed that it covers roams the access point asks for.
+- Turn Smart Connect off on the AX90. That changes band selection for every device in the house.
+- Remove the BSSID lock so the roam can complete. This is the riskiest, because I never tested the other radio for data.
 
-Turning off 802.11v handling in wpa_supplicant (`disable_btm`) wouldn't help, because the firmware moves by itself.
+Turning off 802.11v handling in wpa_supplicant (`disable_btm`) is ruled out. The firmware does the roam, and the `brcmfmac` driver passes only vendor-specific elements from wpa_supplicant into the association request.
 
-TODO(soak): which option Jadon chose (roamoff on the bridge, Smart Connect off on the AX90, or accept the drops), and whether it was tested.
+I haven't chosen yet. The soak ended before the evening, so I'm waiting for the evening's drop count before I decide.
 
-TODO(soak): drop count and timestamps for the rest of the soak, after 17:35 EST on November 11.
+TODO(soak): which option Jadon chooses after the evening drop count (planned for about 01:27 EST on November 12), and whether it was tested.
 
 ## Rollback
 
-The extender is still powered at its old spot with no cable in it. To roll back, I move the switch's uplink cable from DIR-885L LAN port 1 back into the extender and put jhome's cable back on the switch. The two bridges must never both be cabled to the lab, since each answers for the whole lab under its own MAC. Then I check that jhome, VM 109 and CT 110 answer and that the home LAN sees them behind the extender again. The DIR-885L can stay powered with empty ports.
+The extender is still powered at its old spot with no cable in it. To roll back, I take jhome's cable out of DIR-885L LAN port 1, cable the 24-port switch to the extender again and put jhome on the switch, the layout from before the cutover. The two bridges must never both be cabled to the lab, since each answers for the whole lab under its own MAC. Then I check that jhome, VM 109 and CT 110 answer and that the home LAN sees them behind the extender again. The DIR-885L can stay powered with empty ports.
 
 Short of a full rollback, the bridge has two fallbacks of its own. The 2.4 GHz radio worked on the bench with the same relay. If an update breaks 5 GHz, the replacement firmware file is still on the router and in my backups.
 
-TODO(soak): whether the Netgear extender is retired or stays as the rollback.
+TODO(soak): whether Jadon retires the Netgear extender or keeps it as the rollback. Not decided; for now it stays powered and uncabled.
 
 ## Lessons
 
@@ -213,8 +238,7 @@ TODO(jadon): confirm or rewrite these lessons
 
 ## Next steps
 
-TODO(soak): fresh config backup after the soak.
-
-TODO(soak): fixed LAN MAC on the bridge, if Jadon decides to set one.
+- Decide what to do about the band-steering drops once the evening count is in.
+- Give the bridge's LAN interface a fixed MAC. I'll set it at the bridge's next reboot; it isn't done yet.
 
 The Cat6 run to the lab is still the long-term plan. It would remove the Wi-Fi hop, which the direct-cable test during the cutover showed is the limit.
