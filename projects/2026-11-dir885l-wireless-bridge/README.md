@@ -1,8 +1,8 @@
 # DIR-885L wireless bridge: November 2026
 
-On November 11, 2026 I replaced the Wi-Fi link between my lab and the home router. A Netgear WN2000RPTv2 range extender had been doing that job over 2.4 GHz. Now a spare D-Link DIR-885L running OpenWrt 25.12.6 does it over 5 GHz, as a `relayd` client bridge. Lab traffic to the rest of the house went from about 47 Mbit/s to between 239 and 369 Mbit/s, and every host kept its address.
+On November 11, 2026 I replaced the Wi-Fi link between my lab and the home router. A Netgear WN2000RPTv2 range extender had been doing that job over 2.4 GHz. Now a spare D-Link DIR-885L running OpenWrt 25.12.6 does it over 5 GHz, as a `relayd` client bridge. Lab traffic to the rest of the house went from about 47 Mbit/s to between 239 and 272 Mbit/s in the same 40 MB test, and up to 369 Mbit/s on 400 MB transfers. Every host kept its address.
 
-The cutover was at 01:20 EST. I planned a 24-hour soak test and ended it at the 19-hour mark, 20:20, because the results were stable. It passed: all nine Uptime Kuma monitors stayed at 100% with no down beats, and the bridge didn't reboot. The Wi-Fi link dropped three times, for 5 to 7 seconds each, when the router tried to steer the bridge to its other 5 GHz radio. The soak didn't cover 20:20 to 01:20, the evening hours when the house uses Wi-Fi most.
+The cutover was at 01:20 EST. I planned a 24-hour soak test and ended it at the 19-hour mark, 20:20, because every check had held since the cutover. It passed its written condition, no "deauth" lines in the bridge's log, and all nine Uptime Kuma monitors stayed at 100% with no bridge reboot. That condition missed three Wi-Fi drops of 5 to 7 seconds each, right after the router asked the bridge to move to its other 5 GHz radio. The soak didn't cover 20:20 to 01:20, the evening hours when the house uses Wi-Fi most.
 
 Local IPs keep the first three octets and swap the last one for `X`. The [topology page](../../docs/topology.md) shows how everything connects now.
 
@@ -139,11 +139,11 @@ Average latency is about the same, and the worst-case ping dropped from 31 ms to
 
 ## Soak result
 
-The soak started at the cutover, 01:20:32 on November 11. I planned 24 hours and ended it at 20:20:32, the 19-hour mark, because the results were stable. It passed. The state at the finish:
+The soak ran from the cutover, 01:20:32, to 20:20:32 on November 11. The state at the finish:
 
 | Check at 20:20 | Result |
 | :--- | :--- |
-| Uptime Kuma | 100% over 24 hours on all nine monitors, no down beats |
+| Uptime Kuma | 100% over its 24-hour window on all nine monitors, 19 hours of it on the bridge, no down beats |
 | Bridge uptime | 19 h 11 min, no reboot since the cutover |
 | Uplink | Still on the AX90's channel-44 radio, -56 dBm, 1083 Mbit/s, 0 failed transmits |
 | Bridge to home router | 10 of 10 pings, avg 1.908 ms |
@@ -153,7 +153,7 @@ The soak started at the cutover, 01:20:32 on November 11. I planned 24 hours and
 | "deauth" lines in the bridge's log | 0 |
 | Wi-Fi drops | 3, all from band steering, none after 16:56. See [Band steering during the soak](#band-steering-during-the-soak) |
 
-The hours I cut, 20:20 to 01:20, are the household's evening, when the house uses Wi-Fi most. The bridge keeps logging, and I plan to count the evening's drops at about 01:27 on November 12.
+TODO(soak): replace this line with the evening drop count. The bridge keeps logging, and I'll count the drops from 20:20 onward at about 01:27 on November 12.
 
 I changed the cabling during the soak. At 19:22:49 I unplugged the 24-port switch from the bridge. The lab has too few wired devices to need it, and nothing was behind it. It's unplugged, not gone. At 19:30:52 I moved jhome's cable from LAN port 2 to LAN port 1, 3 seconds offline. All four LAN ports sit in one bridge interface, so no configuration changed. Afterwards port 1 linked at 1000 Mb/s full duplex, the three lab hosts and six services answered, and Uptime Kuma recorded no downtime. LAN ports 2 to 4 are empty now.
 
@@ -182,10 +182,10 @@ Not checked:
 - The last 5 hours of the planned 24-hour soak, 20:20 to 01:20, which cover the household's evening.
 - The 2021 radio firmware against Asus's own download (my decision; see above).
 - An actual restore from either config backup, failsafe mode, and bootloader recovery. None has been needed.
-- The router's own log from 03:12 to 05:30 on November 11. It had already rolled out of the log buffer by the time I looked.
+- The bridge's own log from 03:12 to 05:30 on November 11. It had already rolled out of the log buffer by the time I looked, so anything other than a steering drop in that window went unseen; the kernel log, which covers it, shows no steering drop there.
 - Which channel the router's other 5 GHz radio is on now. I ran no scans during the soak.
 
-One more thing from validation: VM 109 stopped answering about three minutes after the cutover. It looked like a bridge problem but wasn't. The stall reproduced from inside the lab, and ARP on the home LAN was clean. The cause was a log query I ran on the VM as part of the checks. With a 1.5 GB journal on the hard disk and about 1.5 GB of RAM, it turned into a storm of random reads that starved every service on the VM. I restarted the VM, and afterwards capped its journal at 200 MB.
+VM 109 stopped answering about three minutes after the cutover. It looked like a bridge problem but wasn't. The stall reproduced from inside the lab, and ARP on the home LAN was clean. The cause was a log query I ran on the VM as part of the checks. With a 1.5 GB journal on the hard disk of a 2 GB VM, it turned into a storm of random reads that starved every service on the VM. I restarted the VM, and afterwards capped its journal at 200 MB.
 
 ## Band steering during the soak
 
@@ -213,13 +213,13 @@ Options I have, none of them tested yet:
 
 Turning off 802.11v handling in wpa_supplicant (`disable_btm`) is ruled out. The firmware does the roam, and the `brcmfmac` driver passes only vendor-specific elements from wpa_supplicant into the association request.
 
-I haven't chosen yet. The soak ended before the evening, so I'm waiting for the evening's drop count before I decide.
+I haven't chosen yet.
 
 TODO(soak): which option Jadon chooses after the evening drop count (planned for about 01:27 EST on November 12), and whether it was tested.
 
 ## Rollback
 
-Through the soak the extender stayed powered at its old spot with no cable in it. Rolling back meant taking jhome's cable out of DIR-885L LAN port 1, cabling the 24-port switch to the extender again and putting jhome on the switch, the layout from before the cutover. The two bridges could never both be cabled to the lab, since each answers for the whole lab under its own MAC.
+Through the soak the extender stayed powered at its old spot with no cable in it. Until 19:22, rolling back meant moving the switch's uplink from DIR-885L LAN port 1 back to the extender and putting jhome back on the switch. After the recabling at 19:30, it meant taking jhome off LAN port 1 and rebuilding that layout. The two bridges could never both be cabled to the lab, since each answers for the whole lab under its own MAC.
 
 I retired the extender on the evening of November 11, after the soak passed, and unplugged it. That rollback is no longer standing.
 

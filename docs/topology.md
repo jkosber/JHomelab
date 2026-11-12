@@ -41,8 +41,6 @@ The dotted line is the only wireless hop. The Netgear extender that did this job
 | Netgear 24-port switch | Former lab switch | Unplugged from the DIR-885L on November 11. The lab has too few wired devices to need it, and nothing was behind it |
 | Netgear WN2000RPTv2 | Old 2.4 GHz extender that did the bridge's job until November 11 | Retired and unplugged on the evening of November 11, after the soak |
 
-While it was still the rollback, the extender and the DIR-885L could never both be cabled to the lab. Each one answers for the whole lab under its own MAC, and two of these proxy-ARP bridges on one segment would both answer for the same addresses.
-
 ## Wi-Fi
 
 The AX90 broadcasts one main SSID on all three of its bands with Smart Connect on, which lets the router steer clients between bands. There is no separate homelab SSID. The 5 GHz channels are set to automatic.
