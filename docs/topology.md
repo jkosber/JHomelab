@@ -13,7 +13,6 @@ flowchart TB
     homelan["Home LAN clients<br/>wired and Wi-Fi"]
     bridge["D-Link DIR-885L, OpenWrt 25.12.6<br/>Wi-Fi client + relayd<br/>192.168.0.X"]
     extender["Netgear WN2000RPTv2 extender<br/>powered, uncabled: rollback"]
-    labswitch["Netgear 24-port switch"]
 
     subgraph jhome["jhome: Proxmox VE"]
         vmbr0["vmbr0<br/>192.168.0.X/24"]
@@ -25,8 +24,7 @@ flowchart TB
     upstream --- router
     router --- homelan
     router -.-|"5 GHz, channel 44, WPA2"| bridge
-    bridge ---|"LAN port 1"| labswitch
-    bridge ---|"LAN port 2"| vmbr0
+    bridge ---|"LAN port 1"| vmbr0
     vmbr0 --- svc
     vmbr0 ---|"routed by jhome"| testnet
     testnet --- labvms
@@ -39,9 +37,9 @@ The dotted line is the only wireless hop. The extender has no link in the diagra
 | Device | Role | Connection |
 | :--- | :--- | :--- |
 | TP-Link Archer AX90 v1.0 | Home router: routing, the only DHCP server, the gateway for every host | Its own WAN side sits behind another gateway upstream |
-| D-Link DIR-885L (hardware A1) | Wi-Fi client bridge for the lab | 5 GHz client of the router's channel-44 radio; four gigabit LAN ports, two in use |
-| Netgear 24-port switch | Lab switch | Uplink cable in DIR-885L LAN port 1, linked at 1000 Mb/s |
-| `jhome` (Alienware 15 R3) | Proxmox host | DIR-885L LAN port 2. It was on the switch until the night of the cutover |
+| D-Link DIR-885L (hardware A1) | Wi-Fi client bridge for the lab | 5 GHz client of the router's channel-44 radio; four gigabit LAN ports in one bridge, only port 1 in use |
+| `jhome` (Alienware 15 R3) | Proxmox host | DIR-885L LAN port 1, linked at 1000 Mb/s full duplex. It was on the switch until the night of the cutover, then on LAN port 2 until 19:30 on November 11 |
+| Netgear 24-port switch | Former lab switch | Unplugged from the DIR-885L on November 11. The lab has too few wired devices to need it, and nothing was behind it |
 | Netgear WN2000RPTv2 | Old 2.4 GHz extender that did the bridge's job until November 11 | Powered and uncabled, kept as the rollback |
 
 The extender and the DIR-885L must never both be cabled to the lab. Each one answers for the whole lab under its own MAC, and two of these proxy-ARP bridges on one segment would both answer for the same addresses.
@@ -78,7 +76,7 @@ The home LAN has no global IPv6, only link-local addresses.
 - DHCP does cross it. VM 109 took a new lease from the home router through the bridge ten minutes after the cutover.
 - The bridge's own `br-lan` interface gets a new random MAC on every boot, so lab hosts see their neighbour change after each bridge reboot.
 
-TODO(soak): fixed LAN MAC on the DIR-885L, if Jadon decides to set one after the soak.
+I'll give `br-lan` a fixed MAC at the bridge's next reboot. Until then the random MAC stays.
 
 ## Monitoring of the path
 

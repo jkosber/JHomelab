@@ -21,10 +21,8 @@ Last updated **November 11, 2026**.
 
 | Project | Date | Result | Write-up |
 | :--- | :--- | :--- | :--- |
-| DIR-885L wireless bridge | November 10–11, 2026 | Replaced the Wi-Fi extender between the lab and the home router with an OpenWrt bridge. Lab-to-home throughput went from about 47 to 239–369 Mbit/s. The 24-hour soak test is still running | [projects/2026-11-dir885l-wireless-bridge](projects/2026-11-dir885l-wireless-bridge/README.md) |
+| DIR-885L wireless bridge | November 10–11, 2026 | Replaced the Wi-Fi extender between the lab and the home router with an OpenWrt bridge. Lab-to-home throughput went from about 47 to 239–369 Mbit/s. It passed a 19-hour soak test with every monitor at 100%. Three Wi-Fi drops of 5 to 7 seconds, caused by the router's band steering, are still open | [projects/2026-11-dir885l-wireless-bridge](projects/2026-11-dir885l-wireless-bridge/README.md) |
 | Patching and monitoring | October 21–23, 2026 | Patched every host after a CA compromise, set up Beszel and Uptime Kuma with Discord alerts, and rebuilt the dashboard | [projects/2026-10-patching-and-monitoring](projects/2026-10-patching-and-monitoring/README.md) |
-
-TODO(soak): update the bridge row's result once the 24-hour soak has an outcome.
 
 - [September 22 health check](notes/health-check-2026-09-22.md): a read-only look at the host and guests that I use as a baseline.
 
@@ -49,11 +47,11 @@ The coursework that fed into this build:
 
 - **Core router:** TP-Link Archer AX90, a tri-band Wi-Fi 6 router in the AX6600 class. Routing, DHCP and the edge firewall. One SSID covers all three bands.
 - **Distribution:** a D-Link DIR-885L running OpenWrt, working as a Wi-Fi client bridge (`relayd`) into the lab over the router's 5 GHz radio. It replaced a Netgear WN2000RPTv2 range extender on November 11, 2026; the extender stays powered and unplugged as the rollback. A Cat6 run will replace the wireless hop for gigabit.
-- **Access:** still flat. The lab switch and the Proxmox host plug straight into the bridge's LAN ports. A managed switch is on the list so I can tag 802.1Q VLANs for home, lab and management.
+- **Access:** still flat. The Proxmox host plugs straight into the bridge's LAN port 1, and the other three ports are empty. I unplugged the old 24-port lab switch on November 11 because the lab has too few wired devices to need it. A managed switch is on the list so I can tag 802.1Q VLANs for home, lab and management.
 
 The [topology page](docs/topology.md) has the diagram, the addressing and what the bridge does and doesn't pass. The [project write-up](projects/2026-11-dir885l-wireless-bridge/README.md) covers how I set it up.
 
-TODO(soak): whether the Netgear extender is retired or stays as the rollback.
+TODO(soak): whether Jadon retires the Netgear extender or keeps it as the rollback. Not decided; for now it stays powered and uncabled.
 
 ## Physical host: `jhome`
 
@@ -208,9 +206,9 @@ Beszel also lists pending package updates for each machine and marks the securit
 
 ### November 2026: a faster link to the house
 
-- **Nov 10–11:** Replaced the Netgear range extender between the lab and the home router with a spare D-Link DIR-885L running OpenWrt 25.12.6 as a `relayd` Wi-Fi client bridge. The 5 GHz radio firmware OpenWrt ships for it passed no data in client mode, so I swapped in an older build after testing two. Bench-tested it on an isolated cable, then moved the lab switch's uplink over at 01:20 on the 11th (27 seconds offline). Lab-to-home throughput went from about 47 to 239–369 Mbit/s with every address unchanged. Added a DHCP reservation for the Proxmox host and two Uptime Kuma monitors for the bridge. The soak test turned up three short Wi-Fi drops, each right after the router sent the bridge a band-steering request. [Write-up](projects/2026-11-dir885l-wireless-bridge/README.md).
+- **Nov 10–11:** Replaced the Netgear range extender between the lab and the home router with a spare D-Link DIR-885L running OpenWrt 25.12.6 as a `relayd` Wi-Fi client bridge. The 5 GHz radio firmware OpenWrt ships for it passed no data in client mode, so I swapped in an older build after testing two. Bench-tested it on an isolated cable, then moved the lab switch's uplink over at 01:20 on the 11th (27 seconds offline). Lab-to-home throughput went from about 47 to 239–369 Mbit/s with every address unchanged. Added a DHCP reservation for the Proxmox host and two Uptime Kuma monitors for the bridge. Ended the planned 24-hour soak test at 19 hours because the results were stable, and it passed: all nine Uptime Kuma monitors at 100% and no bridge reboot. It turned up three short Wi-Fi drops, each right after the router sent the bridge a band-steering request, and none after 16:56. Unplugged the old 24-port lab switch, which nothing needed anymore, and moved the Proxmox host to the bridge's LAN port 1. Took a fresh config backup. [Write-up](projects/2026-11-dir885l-wireless-bridge/README.md).
 
-TODO(soak): soak outcome and the band-steering fix (or the decision to accept the drops) for this entry.
+TODO(soak): the band-steering fix or the decision to accept the drops, for this entry. Waiting on the count of evening drops planned for about 01:27 EST on November 12.
 
 ### October 2026: patching, monitoring and a dashboard that works
 
