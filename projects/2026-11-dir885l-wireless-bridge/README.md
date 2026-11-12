@@ -2,7 +2,7 @@
 
 On November 11, 2026 I replaced the Wi-Fi link between my lab and the home router. A Netgear WN2000RPTv2 range extender had been doing that job over 2.4 GHz. Now a spare D-Link DIR-885L running OpenWrt 25.12.6 does it over 5 GHz, as a `relayd` client bridge. Lab traffic to the rest of the house went from about 47 Mbit/s to between 239 and 272 Mbit/s in the same 40 MB test, and up to 369 Mbit/s on 400 MB transfers. Every host kept its address.
 
-The cutover was at 01:20 EST. I planned a 24-hour soak test and ended it at the 19-hour mark, 20:20, because every check had held since the cutover. It passed its written condition, no "deauth" lines in the bridge's log, and all nine Uptime Kuma monitors stayed at 100% with no bridge reboot. That condition missed three Wi-Fi drops of 5 to 7 seconds each, right after the router asked the bridge to move to its other 5 GHz radio. The soak didn't cover 20:20 to 01:20, the evening hours when the house uses Wi-Fi most.
+The cutover was at 01:20 EST. I planned a 24-hour soak test and ended it at the 19-hour mark, 20:20, because every check had held since the cutover. It passed its written condition, no "deauth" lines in the bridge's log, and all nine Uptime Kuma monitors stayed at 100% with no bridge reboot. That condition missed three Wi-Fi drops of 5 to 7 seconds each, right after the router asked the bridge to move to its other 5 GHz radio. The soak didn't cover the evening, when the house uses Wi-Fi most. I read the bridge's log for those hours afterwards, and it shows no drops from 20:20 to 01:27 on November 12.
 
 Local IPs keep the first three octets and swap the last one for `X`. The [topology page](../../docs/topology.md) shows how everything connects now.
 
@@ -153,7 +153,19 @@ The soak ran from the cutover, 01:20:32, to 20:20:32 on November 11. The state a
 | "deauth" lines in the bridge's log | 0 |
 | Wi-Fi drops | 3, all from band steering, none after 16:56. See [Band steering during the soak](#band-steering-during-the-soak) |
 
-TODO(soak): replace this line with the evening drop count. The bridge keeps logging, and I'll count the drops from 20:20 onward at about 01:27 on November 12.
+The soak didn't cover the evening, so I read the bridge's log for it at 01:27 on November 12. This count comes from the log after the soak ended. It isn't part of the 19-hour soak.
+
+| Check at 01:27, for 20:20:32 to 01:27 | Result |
+| :--- | :--- |
+| Wi-Fi disconnects in the bridge's log | 0 |
+| Steering requests from the AX90 | 0 |
+| Log coverage | The log reached back to 16:20, so the window has no gap |
+| Driver's `Unknown Frame` lines in the kernel log since boot | 3, the same three as during the soak |
+| Uplink | Channel-44 radio, -56 dBm, 0 failed transmits, connected since the reconnect at 16:56:15 |
+| Bridge uptime | 1 day 18 min, no reboot |
+| Uptime Kuma | 100% over its 24-hour window on all nine monitors |
+
+That makes three drops in the bridge's first 24 hours and 18 minutes, all between 13:27 and 16:56.
 
 I changed the cabling during the soak. At 19:22:49 I unplugged the 24-port switch from the bridge. The lab has too few wired devices to need it, and nothing was behind it. It's unplugged, not gone. At 19:30:52 I moved jhome's cable from LAN port 2 to LAN port 1, 3 seconds offline. All four LAN ports sit in one bridge interface, so no configuration changed. Afterwards port 1 linked at 1000 Mb/s full duplex, the three lab hosts and six services answered, and Uptime Kuma recorded no downtime. LAN ports 2 to 4 are empty now.
 
@@ -174,12 +186,13 @@ Checked:
 - DHCP with a real lab guest: VM 109 took a new lease from the AX90 through the bridge at 01:30:10, ten minutes after the cutover. I won't see a renewal, because the AX90 gives reserved hosts an infinite lease.
 - At 16:00 on November 11, 14 hours and 40 minutes in: no bridge reboot, link on channel 44 at -57 dBm, `relayd` running, 0% loss at 2.3 ms from jhome to the router, 100% 24-hour uptime on all nine Kuma monitors, and the replacement radio firmware still loaded.
 - The finish of the soak at 20:20, 19 hours in (see [Soak result](#soak-result)).
+- The evening after the soak, 20:20 to 01:27, from the bridge's log: no drops. It isn't part of the soak.
 - jhome, the other lab hosts and the services after I moved jhome to LAN port 1.
 - The first config backup's key files match the live router by hash.
 
 Not checked:
 
-- The last 5 hours of the planned 24-hour soak, 20:20 to 01:20, which cover the household's evening.
+- More than one day. The drop count comes from the bridge's first 24 hours: the 19-hour soak, plus the evening after it, which I read from the log.
 - The 2021 radio firmware against Asus's own download (my decision; see above).
 - An actual restore from either config backup, failsafe mode, and bootloader recovery. None has been needed.
 - The bridge's own log from 03:12 to 05:30 on November 11. It had already rolled out of the log buffer by the time I looked, so anything other than a steering drop in that window went unseen; the kernel log, which covers it, shows no steering drop there.
@@ -189,7 +202,7 @@ VM 109 stopped answering about three minutes after the cutover. It looked like a
 
 ## Band steering during the soak
 
-The soak turned up three short Wi-Fi drops on November 11, at 13:27:43, 16:04:41 and 16:56:08 EST, lasting about 5, 5 and 7 seconds. There were none from 16:56 to the end of the soak at 20:20. That count covers the whole soak: the bridge's normal log only holds about 9 hours, but its kernel log reaches back to boot at about 01:09 and has exactly three of the driver's `Unknown Frame: category 0xa, action 0x8` lines, one per drop. Uptime Kuma registered none of them.
+The soak turned up three short Wi-Fi drops on November 11, at 13:27:43, 16:04:41 and 16:56:08 EST, lasting about 5, 5 and 7 seconds. There were none from 16:56 to the end of the soak at 20:20, and none in the log for the evening after it. That count covers the whole soak: the bridge's normal log only holds about 9 hours, but its kernel log reaches back to boot at about 01:09 and has exactly three of the driver's `Unknown Frame: category 0xa, action 0x8` lines, one per drop. Uptime Kuma registered none of them.
 
 Each one ran the same way:
 
