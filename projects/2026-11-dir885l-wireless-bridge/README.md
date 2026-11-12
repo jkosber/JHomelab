@@ -213,9 +213,9 @@ Options I have, none of them tested yet:
 
 Turning off 802.11v handling in wpa_supplicant (`disable_btm`) is ruled out. The firmware does the roam, and the `brcmfmac` driver passes only vendor-specific elements from wpa_supplicant into the association request.
 
-I haven't chosen yet.
+I chose to test `roamoff=1`. It goes in with the bridge's next reboot, after the evening drop count, together with the fixed LAN MAC. If the drops continue with firmware roaming off, I'll accept them: each one lasts a few seconds and nothing in the lab noticed any of the three.
 
-TODO(soak): which option Jadon chooses after the evening drop count (planned for about 01:27 EST on November 12), and whether it was tested.
+TODO(soak): when `roamoff=1` was applied and what the bridge showed afterwards.
 
 ## Rollback
 
@@ -236,7 +236,7 @@ The bridge has two fallbacks of its own. The 2.4 GHz radio worked on the bench w
 
 ## Next steps
 
-- Decide what to do about the band-steering drops once the evening count is in.
-- Give the bridge's LAN interface a fixed MAC. I'll set it at the bridge's next reboot; it isn't done yet.
+- Test `roamoff=1` against the band-steering drops, and accept the drops if it doesn't stop them.
+- Give the bridge's LAN interface a fixed MAC in the same reboot; it isn't done yet.
 
 The Cat6 run to the lab is still the long-term plan. It would remove the Wi-Fi hop, which the direct-cable test during the cutover showed is the limit.

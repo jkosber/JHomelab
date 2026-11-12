@@ -207,7 +207,7 @@ Beszel also lists pending package updates for each machine and marks the securit
 - **Nov 10:** Set up a spare D-Link DIR-885L with OpenWrt 25.12.6 as a `relayd` Wi-Fi client bridge to replace the Netgear range extender between the lab and the home router. The 5 GHz radio firmware OpenWrt ships for it passed no data in client mode, so I swapped in an older build after testing two, and bench-tested the bridge on an isolated cable.
 - **Nov 11:** Moved the lab switch's uplink over at 01:20 (27 seconds offline). Lab-to-home throughput went from about 47 to 239–272 Mbit/s in the same test, with every address unchanged. Added a DHCP reservation for the Proxmox host and two Uptime Kuma monitors for the bridge. Ended the planned 24-hour soak test at 19 hours. It passed its written condition, with all nine Uptime Kuma monitors at 100% and no bridge reboot, but that condition missed three short Wi-Fi drops, each right after the router sent the bridge a band-steering request, and none after 16:56. Unplugged the old 24-port lab switch, which nothing needed anymore, and moved the Proxmox host to the bridge's LAN port 1. Took a fresh config backup and retired the range extender that evening. [Write-up](projects/2026-11-dir885l-wireless-bridge/README.md).
 
-TODO(soak): the band-steering fix or the decision to accept the drops, for this entry. Waiting on the count of evening drops planned for about 01:27 EST on November 12.
+TODO(soak): when the `roamoff=1` test against the band-steering drops went in, for this entry.
 
 ### October 2026: patching, monitoring and a dashboard that works
 
