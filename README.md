@@ -46,12 +46,10 @@ The coursework that fed into this build:
 ## Network layout
 
 - **Core router:** TP-Link Archer AX90, a tri-band Wi-Fi 6 router in the AX6600 class. Routing, DHCP and the edge firewall. One SSID covers all three bands.
-- **Distribution:** a D-Link DIR-885L running OpenWrt, working as a Wi-Fi client bridge (`relayd`) into the lab over the router's 5 GHz radio. It replaced a Netgear WN2000RPTv2 range extender on November 11, 2026; the extender stays powered and unplugged as the rollback. A Cat6 run will replace the wireless hop for gigabit.
+- **Distribution:** a D-Link DIR-885L running OpenWrt, working as a Wi-Fi client bridge (`relayd`) into the lab over the router's 5 GHz radio. It replaced a Netgear WN2000RPTv2 range extender on November 11, 2026; I retired the extender that evening, after the bridge passed its soak test. A Cat6 run will replace the wireless hop for gigabit.
 - **Access:** still flat. The Proxmox host plugs straight into the bridge's LAN port 1, and the other three ports are empty. I unplugged the old 24-port lab switch on November 11 because the lab has too few wired devices to need it. A managed switch is on the list so I can tag 802.1Q VLANs for home, lab and management.
 
 The [topology page](docs/topology.md) has the diagram, the addressing and what the bridge does and doesn't pass. The [project write-up](projects/2026-11-dir885l-wireless-bridge/README.md) covers how I set it up.
-
-TODO(soak): whether Jadon retires the Netgear extender or keeps it as the rollback. Not decided; for now it stays powered and uncabled.
 
 ## Physical host: `jhome`
 

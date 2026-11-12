@@ -12,7 +12,6 @@ flowchart TB
     router["TP-Link Archer AX90<br/>router, DHCP server, gateway<br/>192.168.0.X"]
     homelan["Home LAN clients<br/>wired and Wi-Fi"]
     bridge["D-Link DIR-885L, OpenWrt 25.12.6<br/>Wi-Fi client + relayd<br/>192.168.0.X"]
-    extender["Netgear WN2000RPTv2 extender<br/>powered, uncabled: rollback"]
 
     subgraph jhome["jhome: Proxmox VE"]
         vmbr0["vmbr0<br/>192.168.0.X/24"]
@@ -30,7 +29,7 @@ flowchart TB
     testnet --- labvms
 ```
 
-The dotted line is the only wireless hop. The extender has no link in the diagram on purpose: it is powered and unplugged, and only goes back in if I roll the bridge back.
+The dotted line is the only wireless hop. The Netgear extender that did this job before is not in the diagram: I retired it on November 11, after the bridge passed its soak test.
 
 ## Physical layer
 
@@ -40,9 +39,9 @@ The dotted line is the only wireless hop. The extender has no link in the diagra
 | D-Link DIR-885L (hardware A1) | Wi-Fi client bridge for the lab | 5 GHz client of the router's channel-44 radio; four gigabit LAN ports in one bridge, only port 1 in use |
 | `jhome` (Alienware 15 R3) | Proxmox host | DIR-885L LAN port 1, linked at 1000 Mb/s full duplex. It was on the switch until the night of the cutover, then on LAN port 2 until 19:30 on November 11 |
 | Netgear 24-port switch | Former lab switch | Unplugged from the DIR-885L on November 11. The lab has too few wired devices to need it, and nothing was behind it |
-| Netgear WN2000RPTv2 | Old 2.4 GHz extender that did the bridge's job until November 11 | Powered and uncabled, kept as the rollback |
+| Netgear WN2000RPTv2 | Old 2.4 GHz extender that did the bridge's job until November 11 | Retired and unplugged on the evening of November 11, after the soak |
 
-The extender and the DIR-885L must never both be cabled to the lab. Each one answers for the whole lab under its own MAC, and two of these proxy-ARP bridges on one segment would both answer for the same addresses.
+While it was still the rollback, the extender and the DIR-885L could never both be cabled to the lab. Each one answers for the whole lab under its own MAC, and two of these proxy-ARP bridges on one segment would both answer for the same addresses.
 
 ## Wi-Fi
 

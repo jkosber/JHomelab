@@ -14,7 +14,7 @@ A Cat6 run to the lab is still the real fix and stays on the roadmap. The DIR-88
 
 - No lab host changes address.
 - The AX90 stays the only DHCP server and gateway.
-- The extender stays available as the rollback.
+- The extender stays available as the rollback until the bridge has proven itself.
 
 ## Hardware and its limits
 
@@ -219,11 +219,11 @@ TODO(soak): which option Jadon chooses after the evening drop count (planned for
 
 ## Rollback
 
-The extender is still powered at its old spot with no cable in it. To roll back, I take jhome's cable out of DIR-885L LAN port 1, cable the 24-port switch to the extender again and put jhome on the switch, the layout from before the cutover. The two bridges must never both be cabled to the lab, since each answers for the whole lab under its own MAC. Then I check that jhome, VM 109 and CT 110 answer and that the home LAN sees them behind the extender again. The DIR-885L can stay powered with empty ports.
+Through the soak the extender stayed powered at its old spot with no cable in it. Rolling back meant taking jhome's cable out of DIR-885L LAN port 1, cabling the 24-port switch to the extender again and putting jhome on the switch, the layout from before the cutover. The two bridges could never both be cabled to the lab, since each answers for the whole lab under its own MAC.
 
-Short of a full rollback, the bridge has two fallbacks of its own. The 2.4 GHz radio worked on the bench with the same relay. If an update breaks 5 GHz, the replacement firmware file is still on the router and in my backups.
+I retired the extender on the evening of November 11, after the soak passed, and unplugged it. That rollback is no longer standing.
 
-TODO(soak): whether Jadon retires the Netgear extender or keeps it as the rollback. Not decided; for now it stays powered and uncabled.
+The bridge has two fallbacks of its own. The 2.4 GHz radio worked on the bench with the same relay. If an update breaks 5 GHz, the replacement firmware file is still on the router and in my backups.
 
 ## Lessons
 
