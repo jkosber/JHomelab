@@ -227,8 +227,6 @@ The bridge has two fallbacks of its own. The 2.4 GHz radio worked on the bench w
 
 ## Lessons
 
-TODO(jadon): confirm or rewrite these lessons
-
 - **Test the mode you'll actually use.** The known 5 GHz firmware failure was documented for access-point mode only. Client mode failed too, and only the bench test showed it.
 - **A pin in one layer doesn't bind another.** The BSSID lock in wpa_supplicant didn't stop the radio firmware from roaming on its own, and the mismatch is what turned a steering request into a drop.
 - **A check that greps for one word can pass while its intent fails.** The soak check counted "deauth" and read 0 through three disconnects.
