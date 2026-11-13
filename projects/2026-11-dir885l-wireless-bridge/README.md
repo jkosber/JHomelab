@@ -2,7 +2,7 @@
 
 On November 11, 2026 I replaced the Wi-Fi link between my lab and the home router. A Netgear WN2000RPTv2 range extender had been doing that job over 2.4 GHz. Now a spare D-Link DIR-885L running OpenWrt 25.12.6 does it over 5 GHz, as a `relayd` client bridge. Lab traffic to the rest of the house went from about 47 Mbit/s to between 239 and 272 Mbit/s in the same 40 MB test, and up to 369 Mbit/s on 400 MB transfers. Every host kept its address.
 
-The cutover was at 01:20 EST. I planned a 24-hour soak test and ended it at the 19-hour mark, 20:20, because every check had held since the cutover. It passed its written condition, no "deauth" lines in the bridge's log, and all nine Uptime Kuma monitors stayed at 100% with no bridge reboot. That condition missed three Wi-Fi drops of 5 to 7 seconds each, right after the router asked the bridge to move to its other 5 GHz radio. The soak didn't cover the evening, when the house uses Wi-Fi most. I read the bridge's log for those hours afterwards, and it shows no drops from 20:20 to 01:27 on November 12. Right after that I turned the radio firmware's roaming off as a test against the drops. Whether it stops them isn't known yet.
+The cutover was at 01:20 EST. I planned a 24-hour soak test and ended it at the 19-hour mark, 20:20, because every check had held since the cutover. It passed its written condition, no "deauth" lines in the bridge's log, and all nine Uptime Kuma monitors stayed at 100% with no bridge reboot. That condition missed three Wi-Fi drops of 5 to 7 seconds each, right after the router asked the bridge to move to its other 5 GHz radio. The soak didn't cover the evening, when the house uses Wi-Fi most. I read the bridge's log for those hours afterwards, and it shows no drops from 20:20 to 01:27 on November 12. Right after that I turned the radio firmware's roaming off as a test against the drops. It didn't stop them: on November 13 the log showed three more, each right after a steering request. I took the setting out again and accept the drops.
 
 Local IPs keep the first three octets and swap the last one for `X`. The [topology page](../../docs/topology.md) shows how everything connects now.
 
@@ -87,7 +87,7 @@ All three files stay on the router under versioned names, and they're on the upg
 | Firewall | The Wi-Fi interface and the relay sit in the LAN zone. The default WAN interfaces are removed |
 | Management | LAN ports on `192.168.2.X/24`, no DHCP server, no router advertisements. LuCI only listens there |
 | SSH | Keys only, on every address |
-| Since November 12 | Firmware roaming off (`roamoff=1` for the `brcmfmac` driver), as a test against the steering drops. A fixed MAC on the LAN bridge interface |
+| Since November 12 | A fixed MAC on the LAN bridge interface. Firmware roaming off (`roamoff=1` for the `brcmfmac` driver) was tested against the steering drops from November 12 and removed from the config on November 13 |
 | CA store | OpenWrt 25.12.6 still ships the emSign ECC Root CA - G3, the root I removed from my other hosts in October. I removed it from the bridge's bundle on November 11. A reflash or a `ca-bundle` update brings it back |
 
 The Wi-Fi name and key, the passwords and the config backups stay off this repo.
@@ -195,7 +195,7 @@ Checked:
 Not checked:
 
 - More than one day. The drop count comes from the bridge's first 24 hours: the 19-hour soak, plus the evening after it, which I read from the log.
-- Whether `roamoff=1` stops the steering drops. No steering request had come in when I wrote this.
+- What followed the first seven steering requests after the November 12 reboot. Their lines had rolled out of the bridge's log by the time I looked on November 13. The three requests still in the log each ended in a drop.
 - The 2021 radio firmware against Asus's own download (my decision; see above).
 - An actual restore from either config backup, failsafe mode, and bootloader recovery. None has been needed.
 - The bridge's own log from 03:12 to 05:30 on November 11. It had already rolled out of the log buffer by the time I looked, so anything other than a steering drop in that window went unseen; the kernel log, which covers it, shows no steering drop there.
@@ -223,7 +223,7 @@ My soak check also missed these. It counted log lines containing "deauth", and n
 The options I had:
 
 - Leave it and accept drops of a few seconds.
-- Turn firmware roaming off on the bridge (`options brcmfmac roamoff=1`, a reboot, and the file on the upgrade keep-list). The first research pass recommended trying this first. I haven't confirmed that it covers roams the access point asks for.
+- Turn firmware roaming off on the bridge (`options brcmfmac roamoff=1`, a reboot, and the file on the upgrade keep-list). The first research pass recommended trying this first. At that point I hadn't confirmed that it covers roams the access point asks for.
 - Turn Smart Connect off on the AX90. That changes band selection for every device in the house.
 - Remove the BSSID lock so the roam can complete. This is the riskiest, because I never tested the other radio for data.
 
@@ -240,7 +240,11 @@ I chose to test `roamoff=1`. I applied it on November 12 at 01:42, after the eve
 | Lab | jhome, VM 109, CT 110 and the six services answer |
 | Uptime Kuma | No down beat on any of the nine monitors across the reboot |
 
-Whether it stops the drops isn't known yet. The evening before had no steering requests at all, so a quiet day proves nothing. The test needs a steering request in the bridge's log with no disconnect after it. If the drops continue with firmware roaming off, I'll accept them: each one lasts a few seconds and nothing in the lab noticed any of the three.
+The evening before had no steering requests at all, so a quiet day would have proved nothing. The test needed a steering request in the bridge's log with no disconnect after it.
+
+It failed. I read the log on November 13 at 17:16, about 40 hours after the reboot. The kernel log had ten of the `Unknown Frame` lines, so ten steering requests: one on the morning of November 12 and nine on November 13, six of those between 06:15 and 06:50. The bridge's normal log reached back to 07:08 and held the last three, at 10:03:39, 10:04:44 and 13:47:42. Each ran the same way as during the soak: the radio associated to the other 5 GHz radio, the link dropped with reason code 2, and the bridge was back on the channel-44 radio 4 to 7 seconds after the request. The driver reported `roamoff` as 1 the whole time. So the setting doesn't cover roams the access point asks for.
+
+I accept the drops, as I'd decided beforehand. Each one lasts a few seconds. I took the `roamoff=1` line out of the config the same day and didn't reboot for it, so the running driver keeps the setting until the bridge's next reboot. The fixed MAC stays.
 
 ## Rollback
 
@@ -261,6 +265,4 @@ The bridge has two fallbacks of its own. The 2.4 GHz radio worked on the bench w
 
 ## Next steps
 
-- Watch the bridge's log for the next steering request, to see whether `roamoff=1` stops the drops. If it doesn't, I accept them.
-
-The Cat6 run to the lab is still the long-term plan. It would remove the Wi-Fi hop, which the direct-cable test during the cutover showed is the limit.
+The Cat6 run to the lab is still the long-term plan. It would remove the Wi-Fi hop, which the direct-cable test during the cutover showed is the limit, and the steering drops with it.
